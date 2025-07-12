@@ -52,6 +52,19 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				game: {
+					bg: 'hsl(var(--game-bg))',
+					paddle: 'hsl(var(--paddle))',
+					ball: 'hsl(var(--ball))'
+				},
+				brick: {
+					red: 'hsl(var(--brick-red))',
+					orange: 'hsl(var(--brick-orange))',
+					yellow: 'hsl(var(--brick-yellow))',
+					green: 'hsl(var(--brick-green))',
+					blue: 'hsl(var(--brick-blue))',
+					purple: 'hsl(var(--brick-purple))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
