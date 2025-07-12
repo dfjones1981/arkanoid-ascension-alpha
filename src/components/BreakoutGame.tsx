@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -119,6 +120,16 @@ const BreakoutGame: React.FC = () => {
     return '#ffffff'; // fallback
   };
 
+  // Convert HSL to HSLA with alpha
+  const getComputedColorWithAlpha = (cssVar: string, alpha: number): string => {
+    if (typeof window !== 'undefined') {
+      const root = document.documentElement;
+      const value = getComputedStyle(root).getPropertyValue(cssVar).trim();
+      return `hsla(${value}, ${alpha})`;
+    }
+    return `rgba(255, 255, 255, ${alpha})`; // fallback
+  };
+
   // Game loop
   const gameLoop = useCallback(() => {
     const canvas = canvasRef.current;
@@ -221,14 +232,14 @@ const BreakoutGame: React.FC = () => {
     // Draw paddle with gradient effect
     const paddleGradient = ctx.createLinearGradient(paddle.x, paddle.y, paddle.x, paddle.y + paddle.height);
     paddleGradient.addColorStop(0, getComputedColor('--primary'));
-    paddleGradient.addColorStop(1, getComputedColor('--primary').replace('hsl(', 'hsla(').replace(')', ', 0.8)'));
+    paddleGradient.addColorStop(1, getComputedColorWithAlpha('--primary', 0.8));
     ctx.fillStyle = paddleGradient;
     ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
 
     // Draw ball with glow effect
     const ballGradient = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, ball.radius);
     ballGradient.addColorStop(0, getComputedColor('--game-ball'));
-    ballGradient.addColorStop(1, getComputedColor('--game-ball').replace('hsl(', 'hsla(').replace(')', ', 0.6)'));
+    ballGradient.addColorStop(1, getComputedColorWithAlpha('--game-ball', 0.6));
     ctx.fillStyle = ballGradient;
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
