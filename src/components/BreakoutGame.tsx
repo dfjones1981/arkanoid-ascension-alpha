@@ -109,6 +109,16 @@ const BreakoutGame: React.FC = () => {
            ball.y - ball.radius < brick.y + brick.height;
   };
 
+  // Get computed color values for canvas
+  const getComputedColor = (cssVar: string): string => {
+    if (typeof window !== 'undefined') {
+      const root = document.documentElement;
+      const value = getComputedStyle(root).getPropertyValue(cssVar).trim();
+      return `hsl(${value})`;
+    }
+    return '#ffffff'; // fallback
+  };
+
   // Game loop
   const gameLoop = useCallback(() => {
     const canvas = canvasRef.current;
@@ -193,13 +203,13 @@ const BreakoutGame: React.FC = () => {
     }
 
     // Render game
-    ctx.fillStyle = 'hsl(var(--game-bg))';
+    ctx.fillStyle = getComputedColor('--game-bg');
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
     // Draw bricks
     bricks.forEach(brick => {
       if (!brick.destroyed) {
-        ctx.fillStyle = `hsl(var(--${brick.color}))`;
+        ctx.fillStyle = getComputedColor(`--${brick.color}`);
         ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
         
         // Add brick highlight
@@ -210,15 +220,15 @@ const BreakoutGame: React.FC = () => {
 
     // Draw paddle with gradient effect
     const paddleGradient = ctx.createLinearGradient(paddle.x, paddle.y, paddle.x, paddle.y + paddle.height);
-    paddleGradient.addColorStop(0, 'hsl(var(--primary))');
-    paddleGradient.addColorStop(1, 'hsl(var(--primary) / 0.8)');
+    paddleGradient.addColorStop(0, getComputedColor('--primary'));
+    paddleGradient.addColorStop(1, getComputedColor('--primary').replace('hsl(', 'hsla(').replace(')', ', 0.8)'));
     ctx.fillStyle = paddleGradient;
     ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
 
     // Draw ball with glow effect
     const ballGradient = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, ball.radius);
-    ballGradient.addColorStop(0, 'hsl(var(--game-ball))');
-    ballGradient.addColorStop(1, 'hsl(var(--game-ball) / 0.6)');
+    ballGradient.addColorStop(0, getComputedColor('--game-ball'));
+    ballGradient.addColorStop(1, getComputedColor('--game-ball').replace('hsl(', 'hsla(').replace(')', ', 0.6)'));
     ctx.fillStyle = ballGradient;
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
