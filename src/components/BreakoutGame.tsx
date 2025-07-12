@@ -125,7 +125,11 @@ const BreakoutGame: React.FC = () => {
     if (typeof window !== 'undefined') {
       const root = document.documentElement;
       const value = getComputedStyle(root).getPropertyValue(cssVar).trim();
-      return `hsla(${value}, ${alpha})`;
+      // Convert space-separated HSL to comma-separated for Canvas
+      const hslParts = value.split(' ');
+      if (hslParts.length === 3) {
+        return `hsla(${hslParts[0]}, ${hslParts[1]}, ${hslParts[2]}, ${alpha})`;
+      }
     }
     return `rgba(255, 255, 255, ${alpha})`; // fallback
   };
