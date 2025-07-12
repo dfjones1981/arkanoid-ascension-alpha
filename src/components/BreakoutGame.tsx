@@ -244,8 +244,8 @@ const BreakoutGame: React.FC = () => {
 
     // Draw ball with glow effect
     const ballGradient = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, ball.radius);
-    ballGradient.addColorStop(0, getComputedColor('--game-ball'));
-    ballGradient.addColorStop(1, getComputedColorWithAlpha('--game-ball', 0.6));
+    ballGradient.addColorStop(0, getComputedColor('--ball'));
+    ballGradient.addColorStop(1, getComputedColorWithAlpha('--ball', 0.6));
     ctx.fillStyle = ballGradient;
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
