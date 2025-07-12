@@ -71,6 +71,7 @@ const BreakoutGame: React.FC = () => {
   const bricksRef = useRef<Brick[]>([]);
   const animationRef = useRef<number>();
   const mouseXRef = useRef<number>(GAME_WIDTH / 2);
+  const mouseYRef = useRef<number>(GAME_HEIGHT - 30);
 
   // Initialize bricks
   const initializeBricks = useCallback(() => {
@@ -146,8 +147,9 @@ const BreakoutGame: React.FC = () => {
     const paddle = paddleRef.current;
     const bricks = bricksRef.current;
 
-    // Update paddle position
+    // Update paddle position to follow mouse cursor
     paddle.x = Math.max(0, Math.min(GAME_WIDTH - paddle.width, mouseXRef.current - paddle.width / 2));
+    paddle.y = Math.max(0, Math.min(GAME_HEIGHT - paddle.height, mouseYRef.current - paddle.height / 2));
 
     // Update ball position
     ball.x += ball.dx;
@@ -259,6 +261,7 @@ const BreakoutGame: React.FC = () => {
     
     const rect = canvas.getBoundingClientRect();
     mouseXRef.current = ((e.clientX - rect.left) / rect.width) * GAME_WIDTH;
+    mouseYRef.current = ((e.clientY - rect.top) / rect.height) * GAME_HEIGHT;
   }, []);
 
   // Game controls
