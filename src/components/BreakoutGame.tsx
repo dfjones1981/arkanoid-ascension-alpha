@@ -26,6 +26,18 @@ interface Brick {
   destroyed: boolean;
 }
 
+interface Debris {
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+  size: number;
+  color: string;
+  life: number;
+  rotation: number;
+  rotationSpeed: number;
+}
+
 const GAME_WIDTH = 800;
 const GAME_HEIGHT = 600;
 const PADDLE_WIDTH = 120;
@@ -55,6 +67,7 @@ const BreakoutGame: React.FC = () => {
   const [ballAttached, setBallAttached] = useState(true);
   const [explosionEffect, setExplosionEffect] = useState<{active: boolean, particles: Array<{x: number, y: number, dx: number, dy: number, life: number}>}>({active: false, particles: []});
   const [warpEffect, setWarpEffect] = useState<{active: boolean, scale: number, opacity: number}>({active: false, scale: 0, opacity: 0});
+  const [debris, setDebris] = useState<Debris[]>([]);
   
   const ballRef = useRef<Ball>({
     x: GAME_WIDTH / 2,
@@ -112,6 +125,36 @@ const BreakoutGame: React.FC = () => {
            ball.x - ball.radius < brick.x + brick.width &&
            ball.y + ball.radius > brick.y &&
            ball.y - ball.radius < brick.y + brick.height;
+  };
+
+  // Check debris collision with paddle
+  const checkDebrisPaddleCollision = (debris: Debris, paddle: Paddle): boolean => {
+    return debris.x + debris.size > paddle.x &&
+           debris.x - debris.size < paddle.x + paddle.width &&
+           debris.y + debris.size > paddle.y &&
+           debris.y - debris.size < paddle.y + paddle.height;
+  };
+
+  // Create debris from destroyed brick
+  const createDebris = (brick: Brick): Debris[] => {
+    const pieces: Debris[] = [];
+    const numPieces = 8;
+    
+    for (let i = 0; i < numPieces; i++) {
+      pieces.push({
+        x: brick.x + Math.random() * brick.width,
+        y: brick.y + Math.random() * brick.height,
+        dx: (Math.random() - 0.5) * 6,
+        dy: Math.random() * 3 + 1,
+        size: Math.random() * 4 + 2,
+        color: brick.color,
+        life: 1,
+        rotation: Math.random() * Math.PI * 2,
+        rotationSpeed: (Math.random() - 0.5) * 0.2
+      });
+    }
+    
+    return pieces;
   };
 
   // Get computed color values for canvas
@@ -183,6 +226,33 @@ const BreakoutGame: React.FC = () => {
       });
     }
 
+    // Update debris physics
+    setDebris(prev => {
+      return prev.map(piece => {
+        // Apply gravity
+        piece.dy += 0.3;
+        piece.x += piece.dx;
+        piece.y += piece.dy;
+        piece.rotation += piece.rotationSpeed;
+        piece.life -= 0.008;
+
+        // Check collision with paddle
+        if (checkDebrisPaddleCollision(piece, paddle)) {
+          piece.dy = -Math.abs(piece.dy) * 0.6; // Bounce with some energy loss
+          piece.dx *= 0.8; // Apply some friction
+          piece.y = paddle.y - piece.size; // Position above paddle
+        }
+
+        // Bounce off walls
+        if (piece.x <= 0 || piece.x >= GAME_WIDTH) {
+          piece.dx = -piece.dx * 0.7;
+          piece.x = Math.max(0, Math.min(GAME_WIDTH, piece.x));
+        }
+
+        return piece;
+      }).filter(piece => piece.life > 0 && piece.y < GAME_HEIGHT + 50);
+    });
+
     // Ball attachment logic
     if (ballAttached) {
       ball.x = paddle.x + paddle.width / 2;
@@ -222,6 +292,11 @@ const BreakoutGame: React.FC = () => {
       if (checkBallBrickCollision(ball, brick)) {
         brick.destroyed = true;
         ball.dy = -ball.dy;
+        
+        // Create debris from destroyed brick
+        const newDebris = createDebris(brick);
+        setDebris(prev => [...prev, ...newDebris]);
+        
         setScore(prev => prev + 10);
         break;
       }
@@ -297,7 +372,34 @@ const BreakoutGame: React.FC = () => {
     ctx.fillStyle = paddleGradient;
     ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
 
-    // Draw ball with glow effect and warp animation
+    // Draw sci-fi ball with multiple effects
+    const time = Date.now() * 0.005;
+    
+    // Outer energy ring
+    ctx.save();
+    ctx.globalAlpha = 0.8;
+    const outerRingGradient = ctx.createRadialGradient(ball.x, ball.y, ball.radius, ball.x, ball.y, ball.radius + 8);
+    outerRingGradient.addColorStop(0, getComputedColorWithAlpha('--primary', 0.6));
+    outerRingGradient.addColorStop(1, 'transparent');
+    ctx.fillStyle = outerRingGradient;
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.radius + 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Pulsing energy field
+    ctx.save();
+    const pulseRadius = ball.radius + 4 + Math.sin(time * 4) * 2;
+    ctx.globalAlpha = 0.4 + Math.sin(time * 3) * 0.2;
+    const pulseGradient = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, pulseRadius);
+    pulseGradient.addColorStop(0, getComputedColorWithAlpha('--secondary', 0.8));
+    pulseGradient.addColorStop(1, 'transparent');
+    ctx.fillStyle = pulseGradient;
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, pulseRadius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
     if (warpEffect.active) {
       ctx.save();
       ctx.globalAlpha = warpEffect.opacity;
@@ -306,12 +408,23 @@ const BreakoutGame: React.FC = () => {
       ctx.translate(-ball.x, -ball.y);
     }
 
-    const ballGradient = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, ball.radius);
-    ballGradient.addColorStop(0, getComputedColor('--ball'));
-    ballGradient.addColorStop(1, getComputedColorWithAlpha('--ball', 0.6));
+    // Main ball core with sci-fi gradient
+    const ballGradient = ctx.createRadialGradient(ball.x - 2, ball.y - 2, 0, ball.x, ball.y, ball.radius);
+    ballGradient.addColorStop(0, '#ffffff');
+    ballGradient.addColorStop(0.3, getComputedColor('--accent'));
+    ballGradient.addColorStop(1, getComputedColor('--primary'));
     ctx.fillStyle = ballGradient;
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Inner glow effect
+    const innerGlow = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, ball.radius - 2);
+    innerGlow.addColorStop(0, getComputedColorWithAlpha('--ball', 0.9));
+    innerGlow.addColorStop(1, 'transparent');
+    ctx.fillStyle = innerGlow;
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.radius - 2, 0, Math.PI * 2);
     ctx.fill();
 
     if (warpEffect.active) {
@@ -327,6 +440,17 @@ const BreakoutGame: React.FC = () => {
         ctx.fill();
       });
     }
+
+    // Draw falling debris
+    debris.forEach(piece => {
+      ctx.save();
+      ctx.translate(piece.x, piece.y);
+      ctx.rotate(piece.rotation);
+      ctx.globalAlpha = piece.life;
+      ctx.fillStyle = getComputedColor(`--${piece.color}`);
+      ctx.fillRect(-piece.size/2, -piece.size/2, piece.size, piece.size);
+      ctx.restore();
+    });
 
     animationRef.current = requestAnimationFrame(gameLoop);
   }, [gameState, score, toast, ballAttached, warpEffect, explosionEffect]);
@@ -361,6 +485,7 @@ const BreakoutGame: React.FC = () => {
     setBallAttached(true);
     setExplosionEffect({ active: false, particles: [] });
     setWarpEffect({ active: true, scale: 0, opacity: 0 });
+    setDebris([]);
     ballRef.current = {
       x: GAME_WIDTH / 2,
       y: GAME_HEIGHT - 50,
