@@ -150,9 +150,9 @@ const BreakoutGame: React.FC = () => {
     const paddle = paddleRef.current;
     const bricks = bricksRef.current;
 
-    // Update paddle position to follow mouse cursor (limited to upper half)
+    // Update paddle position to follow mouse cursor (limited to lower half)
     paddle.x = Math.max(0, Math.min(GAME_WIDTH - paddle.width, mouseXRef.current - paddle.width / 2));
-    paddle.y = Math.max(0, Math.min(GAME_HEIGHT / 2, mouseYRef.current - paddle.height / 2));
+    paddle.y = Math.max(GAME_HEIGHT / 2, Math.min(GAME_HEIGHT - paddle.height, mouseYRef.current - paddle.height / 2));
 
     // Update warp effect
     if (warpEffect.active) {
