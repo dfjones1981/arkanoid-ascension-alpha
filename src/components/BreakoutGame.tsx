@@ -52,12 +52,15 @@ const BreakoutGame: React.FC = () => {
   const [gameState, setGameState] = useState<'playing' | 'paused' | 'gameOver' | 'won'>('playing');
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
+  const [ballAttached, setBallAttached] = useState(true);
+  const [explosionEffect, setExplosionEffect] = useState<{active: boolean, particles: Array<{x: number, y: number, dx: number, dy: number, life: number}>}>({active: false, particles: []});
+  const [warpEffect, setWarpEffect] = useState<{active: boolean, scale: number, opacity: number}>({active: false, scale: 0, opacity: 0});
   
   const ballRef = useRef<Ball>({
     x: GAME_WIDTH / 2,
     y: GAME_HEIGHT - 50,
-    dx: 4,
-    dy: -4,
+    dx: 2.5,
+    dy: -2.5,
     radius: BALL_RADIUS
   });
   
@@ -151,9 +154,46 @@ const BreakoutGame: React.FC = () => {
     paddle.x = Math.max(0, Math.min(GAME_WIDTH - paddle.width, mouseXRef.current - paddle.width / 2));
     paddle.y = Math.max(0, Math.min(GAME_HEIGHT - paddle.height, mouseYRef.current - paddle.height / 2));
 
-    // Update ball position
-    ball.x += ball.dx;
-    ball.y += ball.dy;
+    // Update warp effect
+    if (warpEffect.active) {
+      setWarpEffect(prev => {
+        const newScale = Math.min(prev.scale + 0.05, 1);
+        const newOpacity = Math.min(prev.opacity + 0.03, 1);
+        if (newScale >= 1 && newOpacity >= 1) {
+          return { active: false, scale: 1, opacity: 1 };
+        }
+        return { ...prev, scale: newScale, opacity: newOpacity };
+      });
+    }
+
+    // Update explosion effect
+    if (explosionEffect.active) {
+      setExplosionEffect(prev => {
+        const updatedParticles = prev.particles.map(particle => ({
+          ...particle,
+          x: particle.x + particle.dx,
+          y: particle.y + particle.dy,
+          life: particle.life - 0.02
+        })).filter(particle => particle.life > 0);
+        
+        if (updatedParticles.length === 0) {
+          return { active: false, particles: [] };
+        }
+        return { ...prev, particles: updatedParticles };
+      });
+    }
+
+    // Ball attachment logic
+    if (ballAttached) {
+      ball.x = paddle.x + paddle.width / 2;
+      ball.y = paddle.y - ball.radius - 5;
+      ball.dx = 0;
+      ball.dy = 0;
+    } else {
+      // Update ball position
+      ball.x += ball.dx;
+      ball.y += ball.dy;
+    }
 
     // Ball collision with walls
     if (ball.x - ball.radius <= 0 || ball.x + ball.radius >= GAME_WIDTH) {
@@ -187,8 +227,21 @@ const BreakoutGame: React.FC = () => {
       }
     }
 
-    // Check for game over conditions
-    if (ball.y > GAME_HEIGHT) {
+    // Check for game over conditions  
+    if (ball.y > GAME_HEIGHT && !ballAttached) {
+      // Create explosion effect
+      const particles = [];
+      for (let i = 0; i < 15; i++) {
+        particles.push({
+          x: ball.x,
+          y: GAME_HEIGHT,
+          dx: (Math.random() - 0.5) * 6,
+          dy: (Math.random() - 0.5) * 6,
+          life: 1
+        });
+      }
+      setExplosionEffect({ active: true, particles });
+      
       setLives(prev => {
         const newLives = prev - 1;
         if (newLives <= 0) {
@@ -199,11 +252,13 @@ const BreakoutGame: React.FC = () => {
             variant: "destructive"
           });
         } else {
-          // Reset ball position
-          ball.x = GAME_WIDTH / 2;
-          ball.y = GAME_HEIGHT - 50;
-          ball.dx = 4;
-          ball.dy = -4;
+          // Reset ball and attach to paddle
+          setBallAttached(true);
+          setWarpEffect({ active: true, scale: 0, opacity: 0 });
+          ball.x = paddle.x + paddle.width / 2;
+          ball.y = paddle.y - ball.radius - 5;
+          ball.dx = 2.5;
+          ball.dy = -2.5;
         }
         return newLives;
       });
@@ -242,7 +297,15 @@ const BreakoutGame: React.FC = () => {
     ctx.fillStyle = paddleGradient;
     ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
 
-    // Draw ball with glow effect
+    // Draw ball with glow effect and warp animation
+    if (warpEffect.active) {
+      ctx.save();
+      ctx.globalAlpha = warpEffect.opacity;
+      ctx.translate(ball.x, ball.y);
+      ctx.scale(warpEffect.scale, warpEffect.scale);
+      ctx.translate(-ball.x, -ball.y);
+    }
+
     const ballGradient = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, ball.radius);
     ballGradient.addColorStop(0, getComputedColor('--ball'));
     ballGradient.addColorStop(1, getComputedColorWithAlpha('--ball', 0.6));
@@ -250,6 +313,20 @@ const BreakoutGame: React.FC = () => {
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
     ctx.fill();
+
+    if (warpEffect.active) {
+      ctx.restore();
+    }
+
+    // Draw explosion effect
+    if (explosionEffect.active) {
+      explosionEffect.particles.forEach(particle => {
+        ctx.fillStyle = `rgba(255, 100, 100, ${particle.life})`;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
 
     animationRef.current = requestAnimationFrame(gameLoop);
   }, [gameState, score, toast]);
@@ -264,16 +341,29 @@ const BreakoutGame: React.FC = () => {
     mouseYRef.current = ((e.clientY - rect.top) / rect.height) * GAME_HEIGHT;
   }, []);
 
+  // Mouse click handler for launching ball
+  const handleMouseClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (ballAttached && gameState === 'playing') {
+      setBallAttached(false);
+      const ball = ballRef.current;
+      ball.dx = 2.5;
+      ball.dy = -2.5;
+    }
+  }, [ballAttached, gameState]);
+
   // Game controls
   const startGame = () => {
     setGameState('playing');
     setScore(0);
     setLives(3);
+    setBallAttached(true);
+    setExplosionEffect({ active: false, particles: [] });
+    setWarpEffect({ active: true, scale: 0, opacity: 0 });
     ballRef.current = {
       x: GAME_WIDTH / 2,
       y: GAME_HEIGHT - 50,
-      dx: 4,
-      dy: -4,
+      dx: 2.5,
+      dy: -2.5,
       radius: BALL_RADIUS
     };
     initializeBricks();
@@ -323,6 +413,7 @@ const BreakoutGame: React.FC = () => {
           width={GAME_WIDTH}
           height={GAME_HEIGHT}
           onMouseMove={handleMouseMove}
+          onClick={handleMouseClick}
           className="border-2 border-border rounded-lg shadow-2xl cursor-none"
           style={{
             background: 'var(--gradient-game-bg)',
