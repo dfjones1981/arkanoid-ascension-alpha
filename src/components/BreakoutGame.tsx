@@ -150,9 +150,9 @@ const BreakoutGame: React.FC = () => {
     const paddle = paddleRef.current;
     const bricks = bricksRef.current;
 
-    // Update paddle position to follow mouse cursor
+    // Update paddle position to follow mouse cursor (limited to upper half)
     paddle.x = Math.max(0, Math.min(GAME_WIDTH - paddle.width, mouseXRef.current - paddle.width / 2));
-    paddle.y = Math.max(0, Math.min(GAME_HEIGHT - paddle.height, mouseYRef.current - paddle.height / 2));
+    paddle.y = Math.max(0, Math.min(GAME_HEIGHT / 2, mouseYRef.current - paddle.height / 2));
 
     // Update warp effect
     if (warpEffect.active) {
@@ -329,7 +329,7 @@ const BreakoutGame: React.FC = () => {
     }
 
     animationRef.current = requestAnimationFrame(gameLoop);
-  }, [gameState, score, toast]);
+  }, [gameState, score, toast, ballAttached, warpEffect, explosionEffect]);
 
   // Mouse movement handler
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -343,7 +343,9 @@ const BreakoutGame: React.FC = () => {
 
   // Mouse click handler for launching ball
   const handleMouseClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    console.log('Mouse click detected, ballAttached:', ballAttached, 'gameState:', gameState);
     if (ballAttached && gameState === 'playing') {
+      console.log('Launching ball!');
       setBallAttached(false);
       const ball = ballRef.current;
       ball.dx = 2.5;
