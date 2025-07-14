@@ -17,13 +17,15 @@ interface Paddle {
   height: number;
 }
 
-interface Brick {
+interface Invader {
   x: number;
   y: number;
   width: number;
   height: number;
   color: string;
   destroyed: boolean;
+  row: number;
+  col: number;
 }
 
 interface Debris {
@@ -43,18 +45,20 @@ const GAME_HEIGHT = 600;
 const PADDLE_WIDTH = 120;
 const PADDLE_HEIGHT = 15;
 const BALL_RADIUS = 8;
-const BRICK_ROWS = 5;
-const BRICK_COLS = 10;
-const BRICK_WIDTH = 75;
-const BRICK_HEIGHT = 25;
-const BRICK_PADDING = 5;
+const INVADER_ROWS = 5;
+const INVADER_COLS = 10;
+const INVADER_WIDTH = 32;
+const INVADER_HEIGHT = 24;
+const INVADER_PADDING = 8;
+const INVADER_SPEED = 0.5;
+const INVADER_DROP_SPEED = 16;
 
-const BRICK_COLORS = [
-  'brick-red',
-  'brick-orange', 
-  'brick-yellow',
-  'brick-green',
-  'brick-blue'
+const INVADER_COLORS = [
+  'destructive',
+  'warning', 
+  'accent',
+  'secondary',
+  'primary'
 ];
 
 const BreakoutGame: React.FC = () => {
@@ -68,6 +72,8 @@ const BreakoutGame: React.FC = () => {
   const [explosionEffect, setExplosionEffect] = useState<{active: boolean, particles: Array<{x: number, y: number, dx: number, dy: number, life: number}>}>({active: false, particles: []});
   const [warpEffect, setWarpEffect] = useState<{active: boolean, scale: number, opacity: number}>({active: false, scale: 0, opacity: 0});
   const [debris, setDebris] = useState<Debris[]>([]);
+  const [invaderDirection, setInvaderDirection] = useState<1 | -1>(1);
+  const [invaderDropTime, setInvaderDropTime] = useState(0);
   
   const ballRef = useRef<Ball>({
     x: GAME_WIDTH / 2,
@@ -84,30 +90,34 @@ const BreakoutGame: React.FC = () => {
     height: PADDLE_HEIGHT
   });
   
-  const bricksRef = useRef<Brick[]>([]);
+  const invadersRef = useRef<Invader[]>([]);
   const animationRef = useRef<number>();
   const mouseXRef = useRef<number>(GAME_WIDTH / 2);
   const mouseYRef = useRef<number>(GAME_HEIGHT - 30);
 
-  // Initialize bricks
-  const initializeBricks = useCallback(() => {
-    const bricks: Brick[] = [];
-    const startX = (GAME_WIDTH - (BRICK_COLS * (BRICK_WIDTH + BRICK_PADDING) - BRICK_PADDING)) / 2;
-    const startY = 50;
+  // Initialize space invaders
+  const initializeInvaders = useCallback(() => {
+    const invaders: Invader[] = [];
+    const startX = (GAME_WIDTH - (INVADER_COLS * (INVADER_WIDTH + INVADER_PADDING) - INVADER_PADDING)) / 2;
+    const startY = 80;
     
-    for (let row = 0; row < BRICK_ROWS; row++) {
-      for (let col = 0; col < BRICK_COLS; col++) {
-        bricks.push({
-          x: startX + col * (BRICK_WIDTH + BRICK_PADDING),
-          y: startY + row * (BRICK_HEIGHT + BRICK_PADDING),
-          width: BRICK_WIDTH,
-          height: BRICK_HEIGHT,
-          color: BRICK_COLORS[row],
-          destroyed: false
+    for (let row = 0; row < INVADER_ROWS; row++) {
+      for (let col = 0; col < INVADER_COLS; col++) {
+        invaders.push({
+          x: startX + col * (INVADER_WIDTH + INVADER_PADDING),
+          y: startY + row * (INVADER_HEIGHT + INVADER_PADDING),
+          width: INVADER_WIDTH,
+          height: INVADER_HEIGHT,
+          color: INVADER_COLORS[row],
+          destroyed: false,
+          row,
+          col
         });
       }
     }
-    bricksRef.current = bricks;
+    invadersRef.current = invaders;
+    setInvaderDirection(1);
+    setInvaderDropTime(0);
   }, []);
 
   // Collision detection
@@ -118,13 +128,13 @@ const BreakoutGame: React.FC = () => {
            ball.y - ball.radius < paddle.y + paddle.height;
   };
 
-  const checkBallBrickCollision = (ball: Ball, brick: Brick): boolean => {
-    if (brick.destroyed) return false;
+  const checkBallInvaderCollision = (ball: Ball, invader: Invader): boolean => {
+    if (invader.destroyed) return false;
     
-    return ball.x + ball.radius > brick.x &&
-           ball.x - ball.radius < brick.x + brick.width &&
-           ball.y + ball.radius > brick.y &&
-           ball.y - ball.radius < brick.y + brick.height;
+    return ball.x + ball.radius > invader.x &&
+           ball.x - ball.radius < invader.x + invader.width &&
+           ball.y + ball.radius > invader.y &&
+           ball.y - ball.radius < invader.y + invader.height;
   };
 
   // Check debris collision with paddle
@@ -135,26 +145,53 @@ const BreakoutGame: React.FC = () => {
            debris.y - debris.size < paddle.y + paddle.height;
   };
 
-  // Create debris from destroyed brick
-  const createDebris = (brick: Brick): Debris[] => {
+  // Create debris from destroyed invader
+  const createDebris = (invader: Invader): Debris[] => {
     const pieces: Debris[] = [];
-    const numPieces = 8;
+    const numPieces = 12;
     
     for (let i = 0; i < numPieces; i++) {
       pieces.push({
-        x: brick.x + Math.random() * brick.width,
-        y: brick.y + Math.random() * brick.height,
-        dx: (Math.random() - 0.5) * 6,
-        dy: Math.random() * 3 + 1,
-        size: Math.random() * 4 + 2,
-        color: brick.color,
+        x: invader.x + Math.random() * invader.width,
+        y: invader.y + Math.random() * invader.height,
+        dx: (Math.random() - 0.5) * 8,
+        dy: Math.random() * 4 + 2,
+        size: Math.random() * 3 + 1,
+        color: invader.color,
         life: 1,
         rotation: Math.random() * Math.PI * 2,
-        rotationSpeed: (Math.random() - 0.5) * 0.2
+        rotationSpeed: (Math.random() - 0.5) * 0.3
       });
     }
     
     return pieces;
+  };
+
+  // Draw pixelated space invader
+  const drawInvader = (ctx: CanvasRenderingContext2D, invader: Invader) => {
+    const pixelSize = 2;
+    const pattern = [
+      [0,0,1,0,0,0,0,0,1,0,0],
+      [0,0,0,1,0,0,0,1,0,0,0],
+      [0,0,1,1,1,1,1,1,1,0,0],
+      [0,1,1,0,1,1,1,0,1,1,0],
+      [1,1,1,1,1,1,1,1,1,1,1],
+      [1,0,1,1,1,1,1,1,1,0,1],
+      [1,0,1,0,0,0,0,0,1,0,1],
+      [0,0,0,1,1,0,1,1,0,0,0],
+    ];
+    
+    ctx.fillStyle = getComputedColor(`--${invader.color}`);
+    
+    for (let row = 0; row < pattern.length; row++) {
+      for (let col = 0; col < pattern[row].length; col++) {
+        if (pattern[row][col]) {
+          const x = invader.x + col * pixelSize;
+          const y = invader.y + row * pixelSize;
+          ctx.fillRect(x, y, pixelSize, pixelSize);
+        }
+      }
+    }
   };
 
   // Get computed color values for canvas
@@ -191,7 +228,7 @@ const BreakoutGame: React.FC = () => {
 
     const ball = ballRef.current;
     const paddle = paddleRef.current;
-    const bricks = bricksRef.current;
+    const invaders = invadersRef.current;
 
     // Update paddle position to follow mouse cursor (limited to lower half)
     paddle.x = Math.max(0, Math.min(GAME_WIDTH - paddle.width, mouseXRef.current - paddle.width / 2));
@@ -224,6 +261,41 @@ const BreakoutGame: React.FC = () => {
         }
         return { ...prev, particles: updatedParticles };
       });
+    }
+
+    // Update invader movement (Space Invaders style)
+    const currentTime = Date.now();
+    if (currentTime - invaderDropTime > 800) { // Move every 800ms
+      const activeInvaders = invaders.filter(inv => !inv.destroyed);
+      
+      if (activeInvaders.length > 0) {
+        // Check if any invader hits the edge
+        const leftMost = Math.min(...activeInvaders.map(inv => inv.x));
+        const rightMost = Math.max(...activeInvaders.map(inv => inv.x + inv.width));
+        
+        let shouldDrop = false;
+        if (invaderDirection === 1 && rightMost >= GAME_WIDTH - 10) {
+          shouldDrop = true;
+          setInvaderDirection(-1);
+        } else if (invaderDirection === -1 && leftMost <= 10) {
+          shouldDrop = true;
+          setInvaderDirection(1);
+        }
+        
+        if (shouldDrop) {
+          // Drop down and change direction
+          activeInvaders.forEach(invader => {
+            invader.y += INVADER_DROP_SPEED;
+          });
+        } else {
+          // Move horizontally
+          activeInvaders.forEach(invader => {
+            invader.x += invaderDirection * 20;
+          });
+        }
+        
+        setInvaderDropTime(currentTime);
+      }
     }
 
     // Update debris physics
@@ -287,17 +359,30 @@ const BreakoutGame: React.FC = () => {
       }
     }
 
-    // Ball collision with bricks
-    for (const brick of bricks) {
-      if (checkBallBrickCollision(ball, brick)) {
-        brick.destroyed = true;
+    // Ball collision with invaders
+    for (const invader of invaders) {
+      if (checkBallInvaderCollision(ball, invader)) {
+        invader.destroyed = true;
         ball.dy = -ball.dy;
         
-        // Create debris from destroyed brick
-        const newDebris = createDebris(brick);
+        // Create explosion effect
+        const explosionParticles = [];
+        for (let i = 0; i < 20; i++) {
+          explosionParticles.push({
+            x: invader.x + invader.width / 2,
+            y: invader.y + invader.height / 2,
+            dx: (Math.random() - 0.5) * 8,
+            dy: (Math.random() - 0.5) * 8,
+            life: 1
+          });
+        }
+        setExplosionEffect({ active: true, particles: explosionParticles });
+        
+        // Create debris from destroyed invader
+        const newDebris = createDebris(invader);
         setDebris(prev => [...prev, ...newDebris]);
         
-        setScore(prev => prev + 10);
+        setScore(prev => prev + (invader.row + 1) * 10); // Higher rows worth more points
         break;
       }
     }
@@ -340,12 +425,12 @@ const BreakoutGame: React.FC = () => {
     }
 
     // Check for win condition
-    const remainingBricks = bricks.filter(brick => !brick.destroyed);
-    if (remainingBricks.length === 0) {
+    const remainingInvaders = invaders.filter(invader => !invader.destroyed);
+    if (remainingInvaders.length === 0) {
       setGameState('won');
       toast({
-        title: "Congratulations!",
-        description: `You won! Final Score: ${score}`,
+        title: "Invasion Defeated!",
+        description: `You saved Earth! Final Score: ${score}`,
       });
     }
 
@@ -353,15 +438,16 @@ const BreakoutGame: React.FC = () => {
     ctx.fillStyle = getComputedColor('--game-bg');
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-    // Draw bricks
-    bricks.forEach(brick => {
-      if (!brick.destroyed) {
-        ctx.fillStyle = getComputedColor(`--${brick.color}`);
-        ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
+    // Draw space invaders
+    invaders.forEach(invader => {
+      if (!invader.destroyed) {
+        drawInvader(ctx, invader);
         
-        // Add brick highlight
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fillRect(brick.x, brick.y, brick.width, 3);
+        // Add subtle glow effect
+        ctx.shadowColor = getComputedColor(`--${invader.color}`);
+        ctx.shadowBlur = 2;
+        drawInvader(ctx, invader);
+        ctx.shadowBlur = 0;
       }
     });
 
@@ -486,6 +572,8 @@ const BreakoutGame: React.FC = () => {
     setExplosionEffect({ active: false, particles: [] });
     setWarpEffect({ active: true, scale: 0, opacity: 0 });
     setDebris([]);
+    setInvaderDirection(1);
+    setInvaderDropTime(0);
     ballRef.current = {
       x: GAME_WIDTH / 2,
       y: GAME_HEIGHT - 50,
@@ -493,7 +581,7 @@ const BreakoutGame: React.FC = () => {
       dy: -2.5,
       radius: BALL_RADIUS
     };
-    initializeBricks();
+    initializeInvaders();
   };
 
   const pauseGame = () => {
@@ -502,7 +590,7 @@ const BreakoutGame: React.FC = () => {
 
   // Initialize game
   useEffect(() => {
-    initializeBricks();
+    initializeInvaders();
     startGame();
     
     return () => {
@@ -510,7 +598,7 @@ const BreakoutGame: React.FC = () => {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [initializeBricks]);
+  }, [initializeInvaders]);
 
   // Start game loop
   useEffect(() => {
@@ -600,8 +688,8 @@ const BreakoutGame: React.FC = () => {
       </div>
       
       <div className="mt-6 text-center text-sm text-muted-foreground max-w-md">
-        <p>Move your mouse to control the paddle. Hit the ball to destroy all bricks!</p>
-        <p className="mt-2">Different colored bricks may have special properties in future updates.</p>
+        <p>Move your mouse to control the paddle. Destroy the invading alien fleet!</p>
+        <p className="mt-2">Watch them move in formation - just like the classic arcade game!</p>
       </div>
     </div>
   );
