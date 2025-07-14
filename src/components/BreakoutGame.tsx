@@ -274,14 +274,23 @@ const BreakoutGame: React.FC = () => {
         const rightMost = Math.max(...activeInvaders.map(inv => inv.x + inv.width));
         
         let currentDirection = invaderDirection;
+        let shouldMove = true;
         
         // Check for wall collision and change direction
         if (currentDirection === 1 && rightMost >= GAME_WIDTH - 20) {
           currentDirection = -1;
           setInvaderDirection(-1);
+          // Move them away from the wall immediately
+          activeInvaders.forEach(invader => {
+            invader.x = Math.min(invader.x, GAME_WIDTH - invader.width - 25);
+          });
         } else if (currentDirection === -1 && leftMost <= 20) {
           currentDirection = 1;
           setInvaderDirection(1);
+          // Move them away from the wall immediately
+          activeInvaders.forEach(invader => {
+            invader.x = Math.max(invader.x, 25);
+          });
         }
         
         // Move horizontally with the current direction
