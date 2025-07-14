@@ -265,7 +265,7 @@ const BreakoutGame: React.FC = () => {
 
     // Update invader movement (Space Invaders style)
     const currentTime = Date.now();
-    if (currentTime - invaderDropTime > 800) { // Move every 800ms
+    if (currentTime - invaderDropTime > 1200) { // Move every 1200ms (slower)
       const activeInvaders = invaders.filter(inv => !inv.destroyed);
       
       if (activeInvaders.length > 0) {
@@ -273,26 +273,17 @@ const BreakoutGame: React.FC = () => {
         const leftMost = Math.min(...activeInvaders.map(inv => inv.x));
         const rightMost = Math.max(...activeInvaders.map(inv => inv.x + inv.width));
         
-        let shouldDrop = false;
+        // Check for wall collision and change direction
         if (invaderDirection === 1 && rightMost >= GAME_WIDTH - 10) {
-          shouldDrop = true;
           setInvaderDirection(-1);
         } else if (invaderDirection === -1 && leftMost <= 10) {
-          shouldDrop = true;
           setInvaderDirection(1);
         }
         
-        if (shouldDrop) {
-          // Drop down and change direction
-          activeInvaders.forEach(invader => {
-            invader.y += INVADER_DROP_SPEED;
-          });
-        } else {
-          // Move horizontally
-          activeInvaders.forEach(invader => {
-            invader.x += invaderDirection * 20;
-          });
-        }
+        // Move horizontally (reduced speed)
+        activeInvaders.forEach(invader => {
+          invader.x += invaderDirection * 12;
+        });
         
         setInvaderDropTime(currentTime);
       }
