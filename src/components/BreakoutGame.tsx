@@ -265,7 +265,7 @@ const BreakoutGame: React.FC = () => {
 
     // Update invader movement (Space Invaders style)
     const currentTime = Date.now();
-    if (currentTime - invaderDropTime > 1200) { // Move every 1200ms (slower)
+    if (currentTime - invaderDropTime > 2000) { // Move every 2000ms (much slower)
       const activeInvaders = invaders.filter(inv => !inv.destroyed);
       
       if (activeInvaders.length > 0) {
