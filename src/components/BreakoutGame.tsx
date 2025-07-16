@@ -73,7 +73,7 @@ const BreakoutGame: React.FC = () => {
   const [warpEffect, setWarpEffect] = useState<{active: boolean, scale: number, opacity: number}>({active: false, scale: 0, opacity: 0});
   const [debris, setDebris] = useState<Debris[]>([]);
   const [invaderDirection, setInvaderDirection] = useState<1 | -1>(1);
-  const [invaderDropTime, setInvaderDropTime] = useState(0);
+  const [invaderFrameCount, setInvaderFrameCount] = useState(0);
   
   const ballRef = useRef<Ball>({
     x: GAME_WIDTH / 2,
@@ -117,7 +117,7 @@ const BreakoutGame: React.FC = () => {
     }
     invadersRef.current = invaders;
     setInvaderDirection(1);
-    setInvaderDropTime(0);
+    setInvaderFrameCount(0);
   }, []);
 
   // Collision detection
@@ -263,43 +263,36 @@ const BreakoutGame: React.FC = () => {
       });
     }
 
-    // Update invader movement (completely rewritten for reliability)
-    const currentTime = Date.now();
-    
-    // Initialize drop time if needed
-    if (invaderDropTime === 0) {
-      setInvaderDropTime(currentTime);
-      return; // Skip first frame to prevent immediate movement
-    }
-    
-    // Move invaders every 800ms
-    if (currentTime - invaderDropTime > 800) {
-      const activeInvaders = invaders.filter(inv => !inv.destroyed);
+    // Simple frame-based invader movement
+    setInvaderFrameCount(prev => {
+      const newCount = prev + 1;
       
-      if (activeInvaders.length > 0) {
-        // Find the edges of the formation
-        const leftMost = Math.min(...activeInvaders.map(inv => inv.x));
-        const rightMost = Math.max(...activeInvaders.map(inv => inv.x + inv.width));
+      // Move invaders every 60 frames (1 second at 60fps)
+      if (newCount >= 60) {
+        const activeInvaders = invaders.filter(inv => !inv.destroyed);
         
-        // Simple direction logic - check BEFORE moving
-        let newDirection = invaderDirection;
-        if (invaderDirection === 1 && rightMost >= GAME_WIDTH - 30) {
-          newDirection = -1;
-          setInvaderDirection(-1);
-        } else if (invaderDirection === -1 && leftMost <= 30) {
-          newDirection = 1;
-          setInvaderDirection(1);
+        if (activeInvaders.length > 0) {
+          // Check if formation hits edges
+          const leftMost = Math.min(...activeInvaders.map(inv => inv.x));
+          const rightMost = Math.max(...activeInvaders.map(inv => inv.x + inv.width));
+          
+          // Change direction at walls
+          if ((invaderDirection === 1 && rightMost >= GAME_WIDTH - 30) ||
+              (invaderDirection === -1 && leftMost <= 30)) {
+            setInvaderDirection((-invaderDirection) as 1 | -1);
+          }
+          
+          // Move all invaders
+          activeInvaders.forEach(invader => {
+            invader.x += invaderDirection * 15;
+          });
         }
         
-        // Move all invaders in the current direction
-        const moveDistance = 20;
-        activeInvaders.forEach(invader => {
-          invader.x += newDirection * moveDistance;
-        });
-        
-        setInvaderDropTime(currentTime);
+        return 0; // Reset counter
       }
-    }
+      
+      return newCount;
+    });
 
     // Update debris physics
     setDebris(prev => {
@@ -576,7 +569,7 @@ const BreakoutGame: React.FC = () => {
     setWarpEffect({ active: true, scale: 0, opacity: 0 });
     setDebris([]);
     setInvaderDirection(1);
-    setInvaderDropTime(0);
+    setInvaderFrameCount(0);
     ballRef.current = {
       x: GAME_WIDTH / 2,
       y: GAME_HEIGHT - 50,
