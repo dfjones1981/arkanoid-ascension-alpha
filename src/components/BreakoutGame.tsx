@@ -279,25 +279,15 @@ const BreakoutGame: React.FC = () => {
         if (currentDirection === 1 && rightMost >= GAME_WIDTH - 20) {
           currentDirection = -1;
           setInvaderDirection(-1);
-          // Move entire formation away from right wall
-          const overlapAmount = rightMost - (GAME_WIDTH - 20);
-          activeInvaders.forEach(invader => {
-            invader.x -= overlapAmount + 5; // Move back plus small buffer
-          });
         } else if (currentDirection === -1 && leftMost <= 20) {
           currentDirection = 1;
           setInvaderDirection(1);
-          // Move entire formation away from left wall
-          const overlapAmount = 20 - leftMost;
-          activeInvaders.forEach(invader => {
-            invader.x += overlapAmount + 5; // Move forward plus small buffer
-          });
-        } else {
-          // Normal movement when not hitting walls
-          activeInvaders.forEach(invader => {
-            invader.x += currentDirection * 12;
-          });
         }
+        
+        // Move all invaders in the current direction
+        activeInvaders.forEach(invader => {
+          invader.x += currentDirection * 12;
+        });
         
         setInvaderDropTime(currentTime);
       }
