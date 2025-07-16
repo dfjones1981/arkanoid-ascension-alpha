@@ -279,9 +279,19 @@ const BreakoutGame: React.FC = () => {
         if (currentDirection === 1 && rightMost >= GAME_WIDTH - 20) {
           currentDirection = -1;
           setInvaderDirection(-1);
+          // Move them away from right wall before normal movement
+          const pushBack = rightMost - (GAME_WIDTH - 20);
+          activeInvaders.forEach(invader => {
+            invader.x -= pushBack + 5; // Move away from wall
+          });
         } else if (currentDirection === -1 && leftMost <= 20) {
           currentDirection = 1;
           setInvaderDirection(1);
+          // Move them away from left wall before normal movement
+          const pushForward = 20 - leftMost;
+          activeInvaders.forEach(invader => {
+            invader.x += pushForward + 5; // Move away from wall
+          });
         }
         
         // Move all invaders in the current direction
