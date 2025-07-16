@@ -263,43 +263,38 @@ const BreakoutGame: React.FC = () => {
       });
     }
 
-    // Update invader movement (Space Invaders style)
+    // Update invader movement (completely rewritten for reliability)
     const currentTime = Date.now();
+    
+    // Initialize drop time if needed
     if (invaderDropTime === 0) {
-      setInvaderDropTime(currentTime); // Initialize timing
+      setInvaderDropTime(currentTime);
+      return; // Skip first frame to prevent immediate movement
     }
-    if (currentTime - invaderDropTime > 3000) { // Move every 3000ms (very slow)
+    
+    // Move invaders every 800ms
+    if (currentTime - invaderDropTime > 800) {
       const activeInvaders = invaders.filter(inv => !inv.destroyed);
       
       if (activeInvaders.length > 0) {
-        // Check if any invader hits the edge
+        // Find the edges of the formation
         const leftMost = Math.min(...activeInvaders.map(inv => inv.x));
         const rightMost = Math.max(...activeInvaders.map(inv => inv.x + inv.width));
         
-        let currentDirection = invaderDirection;
-        
-        // Check for wall collision and change direction
-        if (currentDirection === 1 && rightMost >= GAME_WIDTH - 20) {
-          currentDirection = -1;
+        // Simple direction logic - check BEFORE moving
+        let newDirection = invaderDirection;
+        if (invaderDirection === 1 && rightMost >= GAME_WIDTH - 30) {
+          newDirection = -1;
           setInvaderDirection(-1);
-          // Move them away from right wall before normal movement
-          const pushBack = rightMost - (GAME_WIDTH - 20);
-          activeInvaders.forEach(invader => {
-            invader.x -= pushBack + 5; // Move away from wall
-          });
-        } else if (currentDirection === -1 && leftMost <= 20) {
-          currentDirection = 1;
+        } else if (invaderDirection === -1 && leftMost <= 30) {
+          newDirection = 1;
           setInvaderDirection(1);
-          // Move them away from left wall before normal movement
-          const pushForward = 20 - leftMost;
-          activeInvaders.forEach(invader => {
-            invader.x += pushForward + 5; // Move away from wall
-          });
         }
         
-        // Move all invaders in the current direction (bigger movement to see clearly)
+        // Move all invaders in the current direction
+        const moveDistance = 20;
         activeInvaders.forEach(invader => {
-          invader.x += currentDirection * 50;
+          invader.x += newDirection * moveDistance;
         });
         
         setInvaderDropTime(currentTime);
