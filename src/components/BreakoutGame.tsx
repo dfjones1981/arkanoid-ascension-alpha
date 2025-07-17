@@ -72,8 +72,8 @@ const BreakoutGame: React.FC = () => {
   const [explosionEffect, setExplosionEffect] = useState<{active: boolean, particles: Array<{x: number, y: number, dx: number, dy: number, life: number}>}>({active: false, particles: []});
   const [warpEffect, setWarpEffect] = useState<{active: boolean, scale: number, opacity: number}>({active: false, scale: 0, opacity: 0});
   const [debris, setDebris] = useState<Debris[]>([]);
-  const [invaderDirection, setInvaderDirection] = useState<1 | -1>(1);
   const [invaderFrameCount, setInvaderFrameCount] = useState(0);
+  const invaderDirectionRef = useRef<1 | -1>(1);
   
   const ballRef = useRef<Ball>({
     x: GAME_WIDTH / 2,
@@ -112,7 +112,7 @@ const BreakoutGame: React.FC = () => {
     });
     
     invadersRef.current = invaders;
-    setInvaderDirection(1);
+    invaderDirectionRef.current = 1;
     setInvaderFrameCount(0);
   }, []);
 
@@ -272,18 +272,18 @@ const BreakoutGame: React.FC = () => {
           const leftMost = Math.min(...activeInvaders.map(inv => inv.x));
           const rightMost = Math.max(...activeInvaders.map(inv => inv.x + inv.width));
           
-          console.log('Invader movement - Direction:', invaderDirection, 'LeftMost:', leftMost, 'RightMost:', rightMost);
+          console.log('Invader movement - Direction:', invaderDirectionRef.current, 'LeftMost:', leftMost, 'RightMost:', rightMost);
           
-          let currentDirection = invaderDirection;
+          let currentDirection = invaderDirectionRef.current;
           
           // Only change direction if we're actually at the wall and moving towards it
           if (currentDirection === 1 && rightMost + 15 >= GAME_WIDTH - 30) {
             currentDirection = -1;
-            setInvaderDirection(-1);
+            invaderDirectionRef.current = -1;
             console.log('Changed direction to LEFT');
           } else if (currentDirection === -1 && leftMost - 15 <= 30) {
             currentDirection = 1;
-            setInvaderDirection(1);
+            invaderDirectionRef.current = 1;
             console.log('Changed direction to RIGHT');
           }
           
@@ -573,7 +573,7 @@ const BreakoutGame: React.FC = () => {
     setExplosionEffect({ active: false, particles: [] });
     setWarpEffect({ active: true, scale: 0, opacity: 0 });
     setDebris([]);
-    setInvaderDirection(1);
+    invaderDirectionRef.current = 1;
     setInvaderFrameCount(0);
     ballRef.current = {
       x: GAME_WIDTH / 2,
