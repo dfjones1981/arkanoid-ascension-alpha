@@ -121,12 +121,17 @@ const BreakoutGame: React.FC = () => {
     setInvaderFrameCount(0);
   }, []);
 
-  // Collision detection
+  // Collision detection for circular paddle
   const checkBallPaddleCollision = (ball: Ball, paddle: Paddle): boolean => {
-    return ball.x + ball.radius > paddle.x &&
-           ball.x - ball.radius < paddle.x + paddle.width &&
-           ball.y + ball.radius > paddle.y &&
-           ball.y - ball.radius < paddle.y + paddle.height;
+    const paddleCenterX = paddle.x + paddle.width / 2;
+    const paddleCenterY = paddle.y + paddle.height / 2;
+    const paddleRadius = paddle.width / 2; // Use width as diameter
+    
+    const distanceX = ball.x - paddleCenterX;
+    const distanceY = ball.y - paddleCenterY;
+    const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+    
+    return distance <= (ball.radius + paddleRadius);
   };
 
   const checkBallInvaderCollision = (ball: Ball, invader: Invader): boolean => {
@@ -353,10 +358,26 @@ const BreakoutGame: React.FC = () => {
 
     // Ball collision with paddle
     if (checkBallPaddleCollision(ball, paddle)) {
+      const paddleCenterX = paddle.x + paddle.width / 2;
+      const paddleCenterY = paddle.y + paddle.height / 2;
+      
+      // Calculate collision normal based on circular paddle
+      const distanceX = ball.x - paddleCenterX;
+      const distanceY = ball.y - paddleCenterY;
+      const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+      
+      // Normalize the collision normal
+      const normalX = distanceX / distance;
+      const normalY = distanceY / distance;
+      
+      // Reflect the ball velocity off the circular surface
+      const dotProduct = ball.dx * normalX + ball.dy * normalY;
+      ball.dx = ball.dx - 2 * dotProduct * normalX;
+      ball.dy = ball.dy - 2 * dotProduct * normalY;
+      
+      // Ensure ball moves away from paddle
       ball.dy = -Math.abs(ball.dy);
-      // Add angle based on where ball hits paddle
-      const hitPosition = (ball.x - paddle.x) / paddle.width - 0.5;
-      ball.dx += hitPosition * 3;
+      
       // Limit ball speed
       const speed = Math.sqrt(ball.dx ** 2 + ball.dy ** 2);
       if (speed > 8) {
@@ -457,12 +478,18 @@ const BreakoutGame: React.FC = () => {
       }
     });
 
-    // Draw paddle with gradient effect
-    const paddleGradient = ctx.createLinearGradient(paddle.x, paddle.y, paddle.x, paddle.y + paddle.height);
+    // Draw circular paddle with gradient effect
+    const paddleCenterX = paddle.x + paddle.width / 2;
+    const paddleCenterY = paddle.y + paddle.height / 2;
+    const paddleRadius = paddle.width / 2;
+    
+    const paddleGradient = ctx.createRadialGradient(paddleCenterX, paddleCenterY, 0, paddleCenterX, paddleCenterY, paddleRadius);
     paddleGradient.addColorStop(0, getComputedColor('--primary'));
     paddleGradient.addColorStop(1, getComputedColorWithAlpha('--primary', 0.8));
     ctx.fillStyle = paddleGradient;
-    ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
+    ctx.beginPath();
+    ctx.arc(paddleCenterX, paddleCenterY, paddleRadius, 0, Math.PI * 2);
+    ctx.fill();
 
     // Draw sci-fi ball with multiple effects
     const time = Date.now() * 0.005;
