@@ -276,18 +276,22 @@ const BreakoutGame: React.FC = () => {
           const leftMost = Math.min(...activeInvaders.map(inv => inv.x));
           const rightMost = Math.max(...activeInvaders.map(inv => inv.x + inv.width));
           
+          console.log('Invader movement - Direction:', invaderDirection, 'LeftMost:', leftMost, 'RightMost:', rightMost);
+          
           let currentDirection = invaderDirection;
           
-          // Change direction immediately when hitting walls
-          if (currentDirection === 1 && rightMost >= GAME_WIDTH - 30) {
+          // Only change direction if we're actually at the wall and moving towards it
+          if (currentDirection === 1 && rightMost + 15 >= GAME_WIDTH - 30) {
             currentDirection = -1;
             setInvaderDirection(-1);
-          } else if (currentDirection === -1 && leftMost <= 30) {
+            console.log('Changed direction to LEFT');
+          } else if (currentDirection === -1 && leftMost - 15 <= 30) {
             currentDirection = 1;
             setInvaderDirection(1);
+            console.log('Changed direction to RIGHT');
           }
           
-          // Move all invaders using the correct direction
+          // Move all invaders using the current direction
           activeInvaders.forEach(invader => {
             invader.x += currentDirection * 15;
           });
