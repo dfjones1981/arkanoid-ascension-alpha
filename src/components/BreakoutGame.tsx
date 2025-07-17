@@ -98,23 +98,19 @@ const BreakoutGame: React.FC = () => {
   // Initialize space invaders
   const initializeInvaders = useCallback(() => {
     const invaders: Invader[] = [];
-    const startX = (GAME_WIDTH - (INVADER_COLS * (INVADER_WIDTH + INVADER_PADDING) - INVADER_PADDING)) / 2;
-    const startY = 80;
     
-    for (let row = 0; row < INVADER_ROWS; row++) {
-      for (let col = 0; col < INVADER_COLS; col++) {
-        invaders.push({
-          x: startX + col * (INVADER_WIDTH + INVADER_PADDING),
-          y: startY + row * (INVADER_HEIGHT + INVADER_PADDING),
-          width: INVADER_WIDTH,
-          height: INVADER_HEIGHT,
-          color: INVADER_COLORS[row],
-          destroyed: false,
-          row,
-          col
-        });
-      }
-    }
+    // Create just one invader for debugging
+    invaders.push({
+      x: GAME_WIDTH / 2 - INVADER_WIDTH / 2,
+      y: 100,
+      width: INVADER_WIDTH,
+      height: INVADER_HEIGHT,
+      color: INVADER_COLORS[0],
+      destroyed: false,
+      row: 0,
+      col: 0
+    });
+    
     invadersRef.current = invaders;
     setInvaderDirection(1);
     setInvaderFrameCount(0);
