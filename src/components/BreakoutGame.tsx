@@ -272,19 +272,24 @@ const BreakoutGame: React.FC = () => {
         const activeInvaders = invaders.filter(inv => !inv.destroyed);
         
         if (activeInvaders.length > 0) {
-          // Check if formation hits edges
+          // Check if formation hits edges and determine direction
           const leftMost = Math.min(...activeInvaders.map(inv => inv.x));
           const rightMost = Math.max(...activeInvaders.map(inv => inv.x + inv.width));
           
-          // Change direction at walls
-          if ((invaderDirection === 1 && rightMost >= GAME_WIDTH - 30) ||
-              (invaderDirection === -1 && leftMost <= 30)) {
-            setInvaderDirection((-invaderDirection) as 1 | -1);
+          let currentDirection = invaderDirection;
+          
+          // Change direction immediately when hitting walls
+          if (currentDirection === 1 && rightMost >= GAME_WIDTH - 30) {
+            currentDirection = -1;
+            setInvaderDirection(-1);
+          } else if (currentDirection === -1 && leftMost <= 30) {
+            currentDirection = 1;
+            setInvaderDirection(1);
           }
           
-          // Move all invaders
+          // Move all invaders using the correct direction
           activeInvaders.forEach(invader => {
-            invader.x += invaderDirection * 15;
+            invader.x += currentDirection * 15;
           });
         }
         
