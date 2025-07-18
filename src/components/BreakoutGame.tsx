@@ -42,8 +42,8 @@ interface Debris {
 
 const GAME_WIDTH = 800;
 const GAME_HEIGHT = 600;
-const PADDLE_WIDTH = 60;
-const PADDLE_HEIGHT = 60;
+const PADDLE_WIDTH = 24;
+const PADDLE_HEIGHT = 24;
 const BALL_RADIUS = 8;
 const INVADER_ROWS = 5;
 const INVADER_COLS = 10;
