@@ -421,11 +421,11 @@ const BreakoutGame: React.FC = () => {
           const newInvaders = [];
           for (let i = 0; i < 2; i++) {
             newInvaders.push({
-              x: invader.x + (i * invader.width / 4),
+              x: invader.x + (i * invader.width * 0.8), // Increased spacing
               y: invader.y,
               width: invader.width / 2,
               height: invader.height / 2,
-              color: invader.color,
+              color: INVADER_COLORS[Math.floor(Math.random() * INVADER_COLORS.length)], // Random color
               destroyed: false,
               row: invader.row,
               col: invader.col + i,
@@ -438,11 +438,11 @@ const BreakoutGame: React.FC = () => {
           const newInvaders = [];
           for (let i = 0; i < 2; i++) {
             newInvaders.push({
-              x: invader.x + (i * invader.width / 4),
+              x: invader.x + (i * invader.width * 0.9), // Increased spacing
               y: invader.y,
               width: invader.width / 2,
               height: invader.height / 2,
-              color: invader.color,
+              color: INVADER_COLORS[Math.floor(Math.random() * INVADER_COLORS.length)], // Random color
               destroyed: false,
               row: invader.row,
               col: invader.col + i,
