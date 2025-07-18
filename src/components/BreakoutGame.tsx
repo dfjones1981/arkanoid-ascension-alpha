@@ -339,7 +339,9 @@ const BreakoutGame: React.FC = () => {
     // Ball attachment logic
     if (ballAttached) {
       ball.x = paddle.x + paddle.width / 2;
-      ball.y = paddle.y - ball.radius - 5;
+      // Position ball to touch the top of the circular paddle
+      const paddleRadius = paddle.width / 2;
+      ball.y = paddle.y + paddle.height / 2 - paddleRadius - ball.radius;
       ball.dx = 0;
       ball.dy = 0;
     } else {
@@ -443,7 +445,9 @@ const BreakoutGame: React.FC = () => {
           setBallAttached(true);
           setWarpEffect({ active: true, scale: 0, opacity: 0 });
           ball.x = paddle.x + paddle.width / 2;
-          ball.y = paddle.y - ball.radius - 5;
+          // Position ball to touch the top of the circular paddle
+          const paddleRadius = paddle.width / 2;
+          ball.y = paddle.y + paddle.height / 2 - paddleRadius - ball.radius;
           ball.dx = 2.5;
           ball.dy = -2.5;
         }
