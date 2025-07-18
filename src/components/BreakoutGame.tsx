@@ -26,6 +26,7 @@ interface Invader {
   destroyed: boolean;
   row: number;
   col: number;
+  size: 'large' | 'medium' | 'small';
 }
 
 interface Debris {
@@ -45,10 +46,10 @@ const GAME_HEIGHT = 600;
 const PADDLE_WIDTH = 24;
 const PADDLE_HEIGHT = 24;
 const BALL_RADIUS = 8;
-const INVADER_ROWS = 5;
-const INVADER_COLS = 10;
-const INVADER_WIDTH = 32;
-const INVADER_HEIGHT = 24;
+const INVADER_ROWS = 2;
+const INVADER_COLS = 2;
+const INVADER_WIDTH = 128; // 4x larger than original 32
+const INVADER_HEIGHT = 96; // 4x larger than original 24
 const INVADER_PADDING = 8;
 const INVADER_SPEED = 0.5;
 const INVADER_DROP_SPEED = 16;
@@ -111,7 +112,8 @@ const BreakoutGame: React.FC = () => {
           color: INVADER_COLORS[row],
           destroyed: false,
           row,
-          col
+          col,
+          size: 'large'
         });
       }
     }
@@ -175,7 +177,9 @@ const BreakoutGame: React.FC = () => {
 
   // Draw pixelated space invader
   const drawInvader = (ctx: CanvasRenderingContext2D, invader: Invader) => {
-    const pixelSize = 2;
+    // Scale pixel size based on invader size
+    const basePixelSize = invader.size === 'large' ? 8 : invader.size === 'medium' ? 4 : 2;
+    
     const pattern = [
       [0,0,1,0,0,0,0,0,1,0,0],
       [0,0,0,1,0,0,0,1,0,0,0],
@@ -192,9 +196,9 @@ const BreakoutGame: React.FC = () => {
     for (let row = 0; row < pattern.length; row++) {
       for (let col = 0; col < pattern[row].length; col++) {
         if (pattern[row][col]) {
-          const x = invader.x + col * pixelSize;
-          const y = invader.y + row * pixelSize;
-          ctx.fillRect(x, y, pixelSize, pixelSize);
+          const x = invader.x + col * basePixelSize;
+          const y = invader.y + row * basePixelSize;
+          ctx.fillRect(x, y, basePixelSize, basePixelSize);
         }
       }
     }
@@ -410,6 +414,44 @@ const BreakoutGame: React.FC = () => {
         // Create debris from destroyed invader
         const newDebris = createDebris(invader);
         setDebris(prev => [...prev, ...newDebris]);
+        
+        // Handle invader splitting
+        if (invader.size === 'large') {
+          // Split into 2 medium invaders
+          const newInvaders = [];
+          for (let i = 0; i < 2; i++) {
+            newInvaders.push({
+              x: invader.x + (i * invader.width / 4),
+              y: invader.y,
+              width: invader.width / 2,
+              height: invader.height / 2,
+              color: invader.color,
+              destroyed: false,
+              row: invader.row,
+              col: invader.col + i,
+              size: 'medium' as const
+            });
+          }
+          invadersRef.current = [...invaders.filter(inv => inv !== invader), ...newInvaders];
+        } else if (invader.size === 'medium') {
+          // Split into 2 small invaders
+          const newInvaders = [];
+          for (let i = 0; i < 2; i++) {
+            newInvaders.push({
+              x: invader.x + (i * invader.width / 4),
+              y: invader.y,
+              width: invader.width / 2,
+              height: invader.height / 2,
+              color: invader.color,
+              destroyed: false,
+              row: invader.row,
+              col: invader.col + i,
+              size: 'small' as const
+            });
+          }
+          invadersRef.current = [...invaders.filter(inv => inv !== invader), ...newInvaders];
+        }
+        // Small invaders are just destroyed (no splitting)
         
         setScore(prev => prev + (invader.row + 1) * 10); // Higher rows worth more points
         break;
