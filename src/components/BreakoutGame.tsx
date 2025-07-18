@@ -42,8 +42,8 @@ interface Debris {
 
 const GAME_WIDTH = 800;
 const GAME_HEIGHT = 600;
-const PADDLE_WIDTH = 120;
-const PADDLE_HEIGHT = 15;
+const PADDLE_WIDTH = 60;
+const PADDLE_HEIGHT = 60;
 const BALL_RADIUS = 8;
 const INVADER_ROWS = 5;
 const INVADER_COLS = 10;
@@ -478,21 +478,59 @@ const BreakoutGame: React.FC = () => {
       }
     });
 
-    // Draw circular paddle with gradient effect
+    // Draw space-themed circular paddle
     const paddleCenterX = paddle.x + paddle.width / 2;
     const paddleCenterY = paddle.y + paddle.height / 2;
     const paddleRadius = paddle.width / 2;
     
+    // Outer ring with pulsing glow
+    const time = Date.now() * 0.003;
+    const glowIntensity = 0.3 + Math.sin(time) * 0.2;
+    
+    // Outer glow
+    const outerGlow = ctx.createRadialGradient(paddleCenterX, paddleCenterY, paddleRadius * 0.5, paddleCenterX, paddleCenterY, paddleRadius * 1.5);
+    outerGlow.addColorStop(0, getComputedColorWithAlpha('--primary', glowIntensity));
+    outerGlow.addColorStop(1, getComputedColorWithAlpha('--primary', 0));
+    ctx.fillStyle = outerGlow;
+    ctx.beginPath();
+    ctx.arc(paddleCenterX, paddleCenterY, paddleRadius * 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Main paddle body
     const paddleGradient = ctx.createRadialGradient(paddleCenterX, paddleCenterY, 0, paddleCenterX, paddleCenterY, paddleRadius);
     paddleGradient.addColorStop(0, getComputedColor('--primary'));
-    paddleGradient.addColorStop(1, getComputedColorWithAlpha('--primary', 0.8));
+    paddleGradient.addColorStop(0.7, getComputedColorWithAlpha('--primary', 0.9));
+    paddleGradient.addColorStop(1, getComputedColorWithAlpha('--primary', 0.6));
     ctx.fillStyle = paddleGradient;
     ctx.beginPath();
     ctx.arc(paddleCenterX, paddleCenterY, paddleRadius, 0, Math.PI * 2);
     ctx.fill();
+    
+    // Inner core with different color
+    const coreGradient = ctx.createRadialGradient(paddleCenterX, paddleCenterY, 0, paddleCenterX, paddleCenterY, paddleRadius * 0.4);
+    coreGradient.addColorStop(0, getComputedColorWithAlpha('--accent', 0.8));
+    coreGradient.addColorStop(1, getComputedColorWithAlpha('--accent', 0.3));
+    ctx.fillStyle = coreGradient;
+    ctx.beginPath();
+    ctx.arc(paddleCenterX, paddleCenterY, paddleRadius * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Rotating energy rings
+    ctx.strokeStyle = getComputedColorWithAlpha('--primary', 0.6);
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 3; i++) {
+      const ringRadius = paddleRadius * (0.6 + i * 0.15);
+      const rotation = time * (1 + i * 0.5);
+      ctx.beginPath();
+      ctx.setLineDash([5, 10]);
+      ctx.lineDashOffset = -rotation * 20;
+      ctx.arc(paddleCenterX, paddleCenterY, ringRadius, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
 
     // Draw sci-fi ball with multiple effects
-    const time = Date.now() * 0.005;
+    const ballTime = Date.now() * 0.005;
     
     // Outer energy ring
     ctx.save();
@@ -508,8 +546,8 @@ const BreakoutGame: React.FC = () => {
 
     // Pulsing energy field
     ctx.save();
-    const pulseRadius = ball.radius + 4 + Math.sin(time * 4) * 2;
-    ctx.globalAlpha = 0.4 + Math.sin(time * 3) * 0.2;
+    const pulseRadius = ball.radius + 4 + Math.sin(ballTime * 4) * 2;
+    ctx.globalAlpha = 0.4 + Math.sin(ballTime * 3) * 0.2;
     const pulseGradient = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, pulseRadius);
     pulseGradient.addColorStop(0, getComputedColorWithAlpha('--secondary', 0.8));
     pulseGradient.addColorStop(1, 'transparent');
