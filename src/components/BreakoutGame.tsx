@@ -513,22 +513,21 @@ const BreakoutGame: React.FC = () => {
         return 0; // Reset counter
       }
       
-      // Check for laser firing every 30 frames (0.5 seconds) regardless of movement
-      if (newCount % 30 === 0) {
+      // Check for laser firing every 30 frames (0.5 seconds) - only one laser at a time
+      if (newCount % 30 === 0 && lasersRef.current.length === 0) { // Only fire if no lasers on screen
         const activeInvaders = invaders.filter(inv => !inv.destroyed && !inv.spawning);
-        activeInvaders.forEach(invader => {
-          if (Math.random() < 0.01) { // 1% chance per invader per check (reduced from 2%)
-            const newLaser: Laser = {
-              x: invader.x + invader.width / 2 - 2, // Center the 4px wide laser
-              y: invader.y + invader.height,
-              width: 4,
-              height: 12,
-              speed: 3
-            };
-            lasersRef.current = [...lasersRef.current, newLaser];
-            playLaserFire();
-          }
-        });
+        if (activeInvaders.length > 0 && Math.random() < 0.02) { // 2% chance when no lasers exist
+          const randomInvader = activeInvaders[Math.floor(Math.random() * activeInvaders.length)];
+          const newLaser: Laser = {
+            x: randomInvader.x + randomInvader.width / 2 - 2, // Center the 4px wide laser
+            y: randomInvader.y + randomInvader.height,
+            width: 4,
+            height: 12,
+            speed: 3
+          };
+          lasersRef.current = [newLaser]; // Only one laser
+          playLaserFire();
+        }
       }
       
       return newCount;
