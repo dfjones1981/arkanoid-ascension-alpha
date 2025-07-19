@@ -27,6 +27,11 @@ interface Invader {
   row: number;
   col: number;
   size: 'large' | 'medium' | 'small';
+  spawning?: boolean;
+  spawnRotation?: number;
+  spawnScale?: number;
+  targetX?: number;
+  targetY?: number;
 }
 
 interface Debris {
@@ -177,6 +182,19 @@ const BreakoutGame: React.FC = () => {
 
   // Draw pixelated space invader
   const drawInvader = (ctx: CanvasRenderingContext2D, invader: Invader) => {
+    ctx.save();
+    
+    // Handle spawning animation
+    if (invader.spawning) {
+      const centerX = invader.x + invader.width / 2;
+      const centerY = invader.y + invader.height / 2;
+      
+      ctx.translate(centerX, centerY);
+      ctx.rotate(invader.spawnRotation || 0);
+      ctx.scale(invader.spawnScale || 1, invader.spawnScale || 1);
+      ctx.translate(-centerX, -centerY);
+    }
+    
     // Scale pixel size based on invader size
     const basePixelSize = invader.size === 'large' ? 8 : invader.size === 'medium' ? 4 : 2;
     
@@ -202,6 +220,8 @@ const BreakoutGame: React.FC = () => {
         }
       }
     }
+    
+    ctx.restore();
   };
 
   // Get computed color values for canvas
@@ -273,13 +293,45 @@ const BreakoutGame: React.FC = () => {
       });
     }
 
+    // Update spawning invaders
+    invaders.forEach(invader => {
+      if (invader.spawning) {
+        // Update spawn animation
+        if (invader.spawnRotation !== undefined) {
+          invader.spawnRotation += 0.3;
+        }
+        if (invader.spawnScale !== undefined && invader.spawnScale < 1) {
+          invader.spawnScale += 0.05;
+        }
+        
+        // Move towards target position
+        if (invader.targetX !== undefined && invader.targetY !== undefined) {
+          const dx = invader.targetX - invader.x;
+          const dy = invader.targetY - invader.y;
+          invader.x += dx * 0.1;
+          invader.y += dy * 0.1;
+          
+          // Stop spawning when close to target
+          if (Math.abs(dx) < 2 && Math.abs(dy) < 2 && invader.spawnScale >= 0.95) {
+            invader.spawning = false;
+            invader.spawnRotation = 0;
+            invader.spawnScale = 1;
+            invader.x = invader.targetX;
+            invader.y = invader.targetY;
+            delete invader.targetX;
+            delete invader.targetY;
+          }
+        }
+      }
+    });
+
     // Simple frame-based invader movement
     setInvaderFrameCount(prev => {
       const newCount = prev + 1;
       
       // Move invaders every 60 frames (1 second at 60fps)
       if (newCount >= 60) {
-        const activeInvaders = invaders.filter(inv => !inv.destroyed);
+        const activeInvaders = invaders.filter(inv => !inv.destroyed && !inv.spawning);
         
         if (activeInvaders.length > 0) {
           // Check if formation hits edges and determine direction
@@ -417,36 +469,58 @@ const BreakoutGame: React.FC = () => {
         
         // Handle invader splitting
         if (invader.size === 'large') {
-          // Split into 2 medium invaders
+          // Split into 2 medium invaders with spin animation
           const newInvaders = [];
+          const centerX = invader.x + invader.width / 2;
+          const centerY = invader.y + invader.height / 2;
+          
           for (let i = 0; i < 2; i++) {
+            const targetX = invader.x + (i * invader.width * 0.8);
+            const targetY = invader.y;
+            
             newInvaders.push({
-              x: invader.x + (i * invader.width * 0.8), // Increased spacing
-              y: invader.y,
+              x: centerX - invader.width / 4, // Start from center
+              y: centerY - invader.height / 4,
               width: invader.width / 2,
               height: invader.height / 2,
-              color: INVADER_COLORS[Math.floor(Math.random() * INVADER_COLORS.length)], // Random color
+              color: INVADER_COLORS[Math.floor(Math.random() * INVADER_COLORS.length)],
               destroyed: false,
               row: invader.row,
               col: invader.col + i,
-              size: 'medium' as const
+              size: 'medium' as const,
+              spawning: true,
+              spawnRotation: Math.random() * Math.PI * 2,
+              spawnScale: 0.1,
+              targetX,
+              targetY
             });
           }
           invadersRef.current = [...invaders.filter(inv => inv !== invader), ...newInvaders];
         } else if (invader.size === 'medium') {
-          // Split into 2 small invaders
+          // Split into 2 small invaders with spin animation
           const newInvaders = [];
+          const centerX = invader.x + invader.width / 2;
+          const centerY = invader.y + invader.height / 2;
+          
           for (let i = 0; i < 2; i++) {
+            const targetX = invader.x + (i * invader.width * 0.9);
+            const targetY = invader.y;
+            
             newInvaders.push({
-              x: invader.x + (i * invader.width * 0.9), // Increased spacing
-              y: invader.y,
+              x: centerX - invader.width / 4, // Start from center
+              y: centerY - invader.height / 4,
               width: invader.width / 2,
               height: invader.height / 2,
-              color: INVADER_COLORS[Math.floor(Math.random() * INVADER_COLORS.length)], // Random color
+              color: INVADER_COLORS[Math.floor(Math.random() * INVADER_COLORS.length)],
               destroyed: false,
               row: invader.row,
               col: invader.col + i,
-              size: 'small' as const
+              size: 'small' as const,
+              spawning: true,
+              spawnRotation: Math.random() * Math.PI * 2,
+              spawnScale: 0.1,
+              targetX,
+              targetY
             });
           }
           invadersRef.current = [...invaders.filter(inv => inv !== invader), ...newInvaders];
