@@ -5,6 +5,7 @@ export const useRetroSounds = () => {
   const synthRef = useRef<Tone.Synth | null>(null);
   const isInitialized = useRef(false);
   const invaderMoveToggle = useRef(false);
+  const lastLaserFireTime = useRef(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   const initializeSynth = useCallback(async () => {
@@ -164,20 +165,18 @@ export const useRetroSounds = () => {
   const playLaserFire = useCallback(async () => {
     console.log('playLaserFire called, soundEnabled:', soundEnabled);
     if (!soundEnabled) return;
+    
+    // Throttle laser fire sounds to prevent timing conflicts (max one every 150ms)
+    const now = Date.now();
+    if (now - lastLaserFireTime.current < 150) return;
+    lastLaserFireTime.current = now;
+    
     await initializeSynth();
     if (!synthRef.current) return;
     
     try {
-      // Scary laser zap sound - quick frequency sweep downward
-      synthRef.current.triggerAttackRelease("A5", "32n");
-      // Add lower menacing tone immediately after
-      setTimeout(() => {
-        synthRef.current?.triggerAttackRelease("E4", "64n");
-      }, 40);
-      // Add final scary low rumble
-      setTimeout(() => {
-        synthRef.current?.triggerAttackRelease("C3", "32n");
-      }, 80);
+      // Simple single note laser sound to avoid timing conflicts
+      synthRef.current.triggerAttackRelease("A5", "64n");
     } catch (error) {
       console.warn('Laser fire sound failed:', error);
     }

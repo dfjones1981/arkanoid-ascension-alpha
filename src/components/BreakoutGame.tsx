@@ -130,6 +130,9 @@ const BreakoutGame: React.FC = () => {
   const animationRef = useRef<number>();
   const mouseXRef = useRef<number>(GAME_WIDTH / 2);
   const mouseYRef = useRef<number>(GAME_HEIGHT - 30);
+  
+  // Cache gradients for performance
+  const gradientCacheRef = useRef<Map<string, CanvasGradient>>(new Map());
 
   // Initialize space invaders
   const initializeInvaders = useCallback(() => {
@@ -894,39 +897,42 @@ const BreakoutGame: React.FC = () => {
     ctx.fillStyle = getComputedColor('--game-bg');
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-    // Draw space invaders
+    // Draw space invaders (optimized - single pass)
     invaders.forEach(invader => {
       if (!invader.destroyed) {
         drawInvader(ctx, invader);
-        
-        // Add subtle glow effect
-        ctx.shadowColor = getComputedColor(`--${invader.color}`);
-        ctx.shadowBlur = 2;
-        drawInvader(ctx, invader);
-        ctx.shadowBlur = 0;
       }
     });
 
-    // Draw simplified circular paddle
+    // Draw simplified circular paddle (cached gradient)
     const paddleCenterX = paddle.x + paddle.width / 2;
     const paddleCenterY = paddle.y + paddle.height / 2;
     const paddleRadius = paddle.width / 2;
     
-    // Simple paddle with basic gradient
-    const paddleGradient = ctx.createRadialGradient(paddleCenterX, paddleCenterY, 0, paddleCenterX, paddleCenterY, paddleRadius);
-    paddleGradient.addColorStop(0, getComputedColor('--primary'));
-    paddleGradient.addColorStop(1, getComputedColorWithAlpha('--primary', 0.7));
+    // Use cached gradient or create new one
+    const paddleKey = `paddle-${paddleRadius}`;
+    let paddleGradient = gradientCacheRef.current.get(paddleKey);
+    if (!paddleGradient) {
+      paddleGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, paddleRadius);
+      paddleGradient.addColorStop(0, getComputedColor('--primary'));
+      paddleGradient.addColorStop(1, getComputedColorWithAlpha('--primary', 0.7));
+      gradientCacheRef.current.set(paddleKey, paddleGradient);
+    }
+    
+    ctx.save();
+    ctx.translate(paddleCenterX, paddleCenterY);
     ctx.fillStyle = paddleGradient;
     ctx.beginPath();
-    ctx.arc(paddleCenterX, paddleCenterY, paddleRadius, 0, Math.PI * 2);
+    ctx.arc(0, 0, paddleRadius, 0, Math.PI * 2);
     ctx.fill();
     
     // Simple border
     ctx.strokeStyle = getComputedColor('--primary');
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(paddleCenterX, paddleCenterY, paddleRadius, 0, Math.PI * 2);
+    ctx.arc(0, 0, paddleRadius, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.restore();
 
     // Draw simplified ball
     if (warpEffect.active) {
@@ -937,15 +943,24 @@ const BreakoutGame: React.FC = () => {
       ctx.translate(-ball.x, -ball.y);
     }
 
-    // Simple ball with basic gradient
-    const ballGradient = ctx.createRadialGradient(ball.x - 2, ball.y - 2, 0, ball.x, ball.y, ball.radius);
-    ballGradient.addColorStop(0, '#ffffff');
-    ballGradient.addColorStop(0.7, getComputedColor('--accent'));
-    ballGradient.addColorStop(1, getComputedColor('--primary'));
+    // Simple ball with cached gradient
+    const ballKey = `ball-${ball.radius}`;
+    let ballGradient = gradientCacheRef.current.get(ballKey);
+    if (!ballGradient) {
+      ballGradient = ctx.createRadialGradient(-2, -2, 0, 0, 0, ball.radius);
+      ballGradient.addColorStop(0, '#ffffff');
+      ballGradient.addColorStop(0.7, getComputedColor('--accent'));
+      ballGradient.addColorStop(1, getComputedColor('--primary'));
+      gradientCacheRef.current.set(ballKey, ballGradient);
+    }
+    
+    ctx.save();
+    ctx.translate(ball.x, ball.y);
     ctx.fillStyle = ballGradient;
     ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+    ctx.arc(0, 0, ball.radius, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
 
     if (warpEffect.active) {
       ctx.restore();
@@ -972,17 +987,10 @@ const BreakoutGame: React.FC = () => {
       ctx.restore();
     });
 
-    // Draw lasers
-    lasersRef.current.forEach((laser, index) => {
-      // Draw laser beam with glow effect
-      ctx.fillStyle = getComputedColor('--destructive');
+    // Draw lasers (optimized - no glow for performance)
+    ctx.fillStyle = getComputedColor('--destructive');
+    lasersRef.current.forEach((laser) => {
       ctx.fillRect(laser.x, laser.y, laser.width, laser.height);
-      
-      // Add glow
-      ctx.shadowColor = getComputedColor('--destructive');
-      ctx.shadowBlur = 8;
-      ctx.fillRect(laser.x, laser.y, laser.width, laser.height);
-      ctx.shadowBlur = 0;
     });
 
     animationRef.current = requestAnimationFrame(gameLoop);
