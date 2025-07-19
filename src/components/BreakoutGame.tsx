@@ -140,13 +140,13 @@ const BreakoutGame: React.FC = () => {
     for (let row = 0; row < 2; row++) {
       // Calculate positions for formation with movement room
       const largeGridWidth = 2 * LARGE_INVADER_WIDTH + 1 * INVADER_PADDING;
-      const sideMargin = 80; // More margin for movement
+      const sideMargin = 120; // Reduced margin to move mediums closer to center
       const availableWidth = GAME_WIDTH - (2 * sideMargin) - largeGridWidth;
       const mediumsPerSide = 3; // Fixed number for better spacing
       
       let currentX = sideMargin;
       
-      // Left side medium invaders
+      // Left side medium invaders (closer to center)
       for (let i = 0; i < mediumsPerSide; i++) {
         invaders.push({
           x: currentX,
@@ -159,7 +159,7 @@ const BreakoutGame: React.FC = () => {
           col: i,
           size: 'medium'
         });
-        currentX += MEDIUM_INVADER_WIDTH + INVADER_PADDING * 2; // More spacing
+        currentX += MEDIUM_INVADER_WIDTH + INVADER_PADDING * 1.5; // Slightly tighter spacing
       }
       
       // Center the 2x2 large invader grid
@@ -180,8 +180,8 @@ const BreakoutGame: React.FC = () => {
         });
       }
       
-      // Right side medium invaders
-      currentX = GAME_WIDTH - sideMargin - (mediumsPerSide * (MEDIUM_INVADER_WIDTH + INVADER_PADDING * 2));
+      // Right side medium invaders (closer to center)
+      currentX = GAME_WIDTH - sideMargin - (mediumsPerSide * (MEDIUM_INVADER_WIDTH + INVADER_PADDING * 1.5));
       for (let i = 0; i < mediumsPerSide; i++) {
         invaders.push({
           x: currentX,
@@ -194,17 +194,17 @@ const BreakoutGame: React.FC = () => {
           col: mediumsPerSide + 2 + i,
           size: 'medium'
         });
-        currentX += MEDIUM_INVADER_WIDTH + INVADER_PADDING * 2;
+        currentX += MEDIUM_INVADER_WIDTH + INVADER_PADDING * 1.5;
       }
     }
     
-    // Row 2: Single row of small invaders underneath
-    const smallRowY = startY + 2 * (Math.max(LARGE_INVADER_HEIGHT, MEDIUM_INVADER_HEIGHT) + INVADER_PADDING);
-    const smallsAcrossScreen = Math.floor((GAME_WIDTH - 60) / (SMALL_INVADER_WIDTH + INVADER_PADDING));
-    const smallRowWidth = smallsAcrossScreen * (SMALL_INVADER_WIDTH + INVADER_PADDING) - INVADER_PADDING;
-    const smallStartX = (GAME_WIDTH - smallRowWidth) / 2;
+    // Row 2: Exactly 10 small invaders centered and lowered
+    const smallRowY = startY + 2 * (Math.max(LARGE_INVADER_HEIGHT, MEDIUM_INVADER_HEIGHT) + INVADER_PADDING) + 30; // Extra spacing to avoid overlap
+    const smallsCount = 10; // Fixed number of small invaders
+    const smallRowWidth = smallsCount * SMALL_INVADER_WIDTH + (smallsCount - 1) * INVADER_PADDING;
+    const smallStartX = (GAME_WIDTH - smallRowWidth) / 2; // Center the row
     
-    for (let col = 0; col < smallsAcrossScreen; col++) {
+    for (let col = 0; col < smallsCount; col++) {
       invaders.push({
         x: smallStartX + col * (SMALL_INVADER_WIDTH + INVADER_PADDING),
         y: smallRowY,
