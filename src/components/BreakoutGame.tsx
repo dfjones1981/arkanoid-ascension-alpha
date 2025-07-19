@@ -170,6 +170,30 @@ const BreakoutGame: React.FC = () => {
            debris.y - debris.size < paddle.y + paddle.height;
   };
 
+  // Check invader collision with paddle
+  const checkInvaderPaddleCollision = (invader: Invader, paddle: Paddle): boolean => {
+    if (invader.destroyed || invader.spawning) return false;
+    
+    const paddleCenterX = paddle.x + paddle.width / 2;
+    const paddleCenterY = paddle.y + paddle.height / 2;
+    const paddleRadius = paddle.width / 2;
+    
+    // Check if any corner of invader is within paddle radius
+    const corners = [
+      { x: invader.x, y: invader.y },
+      { x: invader.x + invader.width, y: invader.y },
+      { x: invader.x, y: invader.y + invader.height },
+      { x: invader.x + invader.width, y: invader.y + invader.height }
+    ];
+    
+    return corners.some(corner => {
+      const distanceX = corner.x - paddleCenterX;
+      const distanceY = corner.y - paddleCenterY;
+      const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+      return distance <= paddleRadius;
+    });
+  };
+
   // Check laser collision with paddle
   const checkLaserPaddleCollision = (laser: Laser, paddle: Paddle): boolean => {
     return laser.x + laser.width > paddle.x &&
@@ -367,10 +391,18 @@ const BreakoutGame: React.FC = () => {
             currentDirection = -1;
             invaderDirectionRef.current = -1;
             console.log('Changed direction to LEFT');
+            // Move all invaders down when changing direction
+            activeInvaders.forEach(invader => {
+              invader.y += INVADER_DROP_SPEED;
+            });
           } else if (currentDirection === -1 && leftMost - 15 <= 30) {
             currentDirection = 1;
             invaderDirectionRef.current = 1;
             console.log('Changed direction to RIGHT');
+            // Move all invaders down when changing direction
+            activeInvaders.forEach(invader => {
+              invader.y += INVADER_DROP_SPEED;
+            });
           }
           
           // Move all invaders using the current direction
@@ -491,6 +523,66 @@ const BreakoutGame: React.FC = () => {
         });
       }
     });
+
+    // Check invader-paddle collisions
+    const activeInvaders = invaders.filter(inv => !inv.destroyed && !inv.spawning);
+    for (const invader of activeInvaders) {
+      if (checkInvaderPaddleCollision(invader, paddle)) {
+        // Paddle hit by invader - create explosion and lose life
+        const explosionParticles = [];
+        for (let i = 0; i < 25; i++) {
+          explosionParticles.push({
+            x: paddle.x + paddle.width / 2,
+            y: paddle.y + paddle.height / 2,
+            dx: (Math.random() - 0.5) * 12,
+            dy: (Math.random() - 0.5) * 12,
+            life: 1
+          });
+        }
+        setExplosionEffect({ active: true, particles: explosionParticles });
+        
+        setLives(prev => {
+          const newLives = prev - 1;
+          if (newLives <= 0) {
+            setGameState('gameOver');
+            playGameOver();
+            toast({
+              title: "Game Over!",
+              description: `Final Score: ${score}`,
+              variant: "destructive"
+            });
+          } else {
+            playDefeat();
+            // Reset ball and attach to paddle
+            setBallAttached(true);
+            setWarpEffect({ active: true, scale: 0, opacity: 0 });
+            ball.x = paddle.x + paddle.width / 2;
+            const paddleRadius = paddle.width / 2;
+            ball.y = paddle.y + paddle.height / 2 - paddleRadius - ball.radius;
+            ball.dx = 2.5;
+            ball.dy = -2.5;
+            
+            // Clear any remaining lasers
+            lasersRef.current = [];
+            setLasers([]);
+          }
+          return newLives;
+        });
+        break;
+      }
+      
+      // Check if invader reached bottom of screen
+      if (invader.y + invader.height >= GAME_HEIGHT) {
+        setGameState('gameOver');
+        playGameOver();
+        toast({
+          title: "Invasion Successful!",
+          description: "The invaders have reached Earth. Game Over!",
+          variant: "destructive"
+        });
+        break;
+      }
+    }
 
     // Ball attachment logic
     if (ballAttached) {
