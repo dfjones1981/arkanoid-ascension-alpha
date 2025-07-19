@@ -69,8 +69,9 @@ const MEDIUM_INVADER_HEIGHT = 36;
 const SMALL_INVADER_WIDTH = 32;
 const SMALL_INVADER_HEIGHT = 24;
 const INVADER_PADDING = 4;
-const INVADER_SPEED = 0.5;
-const INVADER_DROP_SPEED = 16;
+const INVADER_MOVE_DISTANCE = 15; // Constant distance they move each step
+const INVADER_BASE_FRAMES = 180; // Base frames between moves (3 seconds at 60fps)
+const INVADER_DROP_SPEED = 16; // Distance they drop when changing direction
 
 const INVADER_COLORS = [
   'brick-purple',
@@ -230,7 +231,7 @@ const BreakoutGame: React.FC = () => {
     
     invadersRef.current = invaders;
     invaderDirectionRef.current = 1;
-    invaderSpeedRef.current = 15; // Reset speed to initial value
+    invaderSpeedRef.current = 1; // Reset speed to initial value (1 = normal speed)
     setInvaderFrameCount(0);
   }, []);
 
@@ -467,8 +468,9 @@ const BreakoutGame: React.FC = () => {
     setInvaderFrameCount(prev => {
       const newCount = prev + 1;
       
-      // Move invaders every 180 frames (3 seconds at 60fps)
-      if (newCount >= 180) {
+      // Move invaders based on speed (higher speed = move more frequently)
+      const frameThreshold = Math.max(30, INVADER_BASE_FRAMES / invaderSpeedRef.current); // Faster speed = lower threshold
+      if (newCount >= frameThreshold) {
         const activeInvaders = invaders.filter(inv => !inv.destroyed && !inv.spawning);
         
         if (activeInvaders.length > 0) {
@@ -481,7 +483,7 @@ const BreakoutGame: React.FC = () => {
           let currentDirection = invaderDirectionRef.current;
           
           // Only change direction if we're actually at the wall and moving towards it
-          if (currentDirection === 1 && rightMost + invaderSpeedRef.current >= GAME_WIDTH - 30) {
+          if (currentDirection === 1 && rightMost + INVADER_MOVE_DISTANCE >= GAME_WIDTH - 30) {
             currentDirection = -1;
             invaderDirectionRef.current = -1;
             invaderSpeedRef.current += 5; // Increase speed when changing direction
@@ -490,7 +492,7 @@ const BreakoutGame: React.FC = () => {
             activeInvaders.forEach(invader => {
               invader.y += INVADER_DROP_SPEED;
             });
-          } else if (currentDirection === -1 && leftMost - invaderSpeedRef.current <= 30) {
+          } else if (currentDirection === -1 && leftMost - INVADER_MOVE_DISTANCE <= 30) {
             currentDirection = 1;
             invaderDirectionRef.current = 1;
             invaderSpeedRef.current += 5; // Increase speed when changing direction
@@ -501,9 +503,9 @@ const BreakoutGame: React.FC = () => {
             });
           }
           
-          // Move all invaders using the current direction and speed
+          // Move all invaders using constant distance
           activeInvaders.forEach(invader => {
-            invader.x += currentDirection * invaderSpeedRef.current;
+            invader.x += currentDirection * INVADER_MOVE_DISTANCE;
           });
           
           // Play urgent invader movement sound
@@ -1033,7 +1035,7 @@ const BreakoutGame: React.FC = () => {
     lasersRef.current = [];
     setLasers([]);
     invaderDirectionRef.current = 1;
-    invaderSpeedRef.current = 15; // Reset speed to initial value
+    invaderSpeedRef.current = 1; // Reset speed to initial value (1 = normal speed)
     setInvaderFrameCount(0);
     ballRef.current = {
       x: GAME_WIDTH / 2,
