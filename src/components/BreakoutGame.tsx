@@ -139,7 +139,7 @@ const BreakoutGame: React.FC = () => {
     // Row 0 & 1: 2x2 grid of large invaders in center, fewer medium invaders on sides
     for (let row = 0; row < 2; row++) {
       // Calculate positions for formation with movement room
-      const largeGridSpacing = INVADER_PADDING * 3; // Increased spacing between large invaders
+      const largeGridSpacing = INVADER_PADDING * 6; // Much more spacing between large invaders
       const largeGridWidth = 2 * LARGE_INVADER_WIDTH + 1 * largeGridSpacing;
       const sideMargin = 120; // Reduced margin to move mediums closer to center
       const availableWidth = GAME_WIDTH - (2 * sideMargin) - largeGridWidth;
