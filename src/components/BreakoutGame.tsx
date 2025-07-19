@@ -484,7 +484,7 @@ const BreakoutGame: React.FC = () => {
           if (currentDirection === 1 && rightMost + invaderSpeedRef.current >= GAME_WIDTH - 30) {
             currentDirection = -1;
             invaderDirectionRef.current = -1;
-            invaderSpeedRef.current += 2; // Increase speed when changing direction
+            invaderSpeedRef.current += 5; // Increase speed when changing direction
             console.log('Changed direction to LEFT, new speed:', invaderSpeedRef.current);
             // Move all invaders down when changing direction
             activeInvaders.forEach(invader => {
@@ -493,7 +493,7 @@ const BreakoutGame: React.FC = () => {
           } else if (currentDirection === -1 && leftMost - invaderSpeedRef.current <= 30) {
             currentDirection = 1;
             invaderDirectionRef.current = 1;
-            invaderSpeedRef.current += 2; // Increase speed when changing direction
+            invaderSpeedRef.current += 5; // Increase speed when changing direction
             console.log('Changed direction to RIGHT, new speed:', invaderSpeedRef.current);
             // Move all invaders down when changing direction
             activeInvaders.forEach(invader => {
@@ -516,7 +516,7 @@ const BreakoutGame: React.FC = () => {
       // Check for laser firing every 30 frames (0.5 seconds) - only one laser at a time
       if (newCount % 30 === 0 && lasersRef.current.length === 0) { // Only fire if no lasers on screen
         const activeInvaders = invaders.filter(inv => !inv.destroyed && !inv.spawning);
-        if (activeInvaders.length > 0 && Math.random() < 0.02) { // 2% chance when no lasers exist
+        if (activeInvaders.length > 0 && Math.random() < 0.05) { // 5% chance when no lasers exist
           const randomInvader = activeInvaders[Math.floor(Math.random() * activeInvaders.length)];
           const newLaser: Laser = {
             x: randomInvader.x + randomInvader.width / 2 - 2, // Center the 4px wide laser
