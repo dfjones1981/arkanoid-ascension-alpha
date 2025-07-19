@@ -84,8 +84,8 @@ const BreakoutGame: React.FC = () => {
   const ballRef = useRef<Ball>({
     x: GAME_WIDTH / 2,
     y: GAME_HEIGHT - 50,
-    dx: 1.8,
-    dy: -1.8,
+    dx: 1.2,
+    dy: -1.2,
     radius: BALL_RADIUS
   });
   
