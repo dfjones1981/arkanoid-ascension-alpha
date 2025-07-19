@@ -78,10 +78,20 @@ export const useRetroSounds = () => {
     if (!synthRef.current) return;
     
     try {
-      // Classic Space Invaders march sound - alternating low tones
-      const isEvenStep = Math.random() > 0.5;
-      const note = isEvenStep ? "E2" : "C2";
-      synthRef.current.triggerAttackRelease(note, "8n");
+      // Create urgent rhythmic electronic beat
+      // Use a lower bass note for menacing march effect
+      const bassNote = "E1";
+      synthRef.current.triggerAttackRelease(bassNote, "16n");
+      
+      // Add a quick electronic blip for urgency
+      setTimeout(() => {
+        synthRef.current?.triggerAttackRelease("A3", "32n");
+      }, 60);
+      
+      // Add another bass hit for the rhythmic march
+      setTimeout(() => {
+        synthRef.current?.triggerAttackRelease("C2", "16n");
+      }, 120);
     } catch (error) {
       console.warn('Invader move sound failed:', error);
     }
