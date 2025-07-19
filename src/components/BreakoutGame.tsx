@@ -89,6 +89,7 @@ const BreakoutGame: React.FC = () => {
   const [warpEffect, setWarpEffect] = useState<{active: boolean, scale: number, opacity: number}>({active: false, scale: 0, opacity: 0});
   const [debris, setDebris] = useState<Debris[]>([]);
   const [lasers, setLasers] = useState<Laser[]>([]);
+  const lasersRef = useRef<Laser[]>([]);
   const [invaderFrameCount, setInvaderFrameCount] = useState(0);
   const invaderDirectionRef = useRef<1 | -1>(1);
   
@@ -397,10 +398,8 @@ const BreakoutGame: React.FC = () => {
               speed: 3
             };
             console.log('Creating laser at:', newLaser.x, newLaser.y, 'from invader at:', invader.x, invader.y);
-            setLasers(prev => {
-              console.log('Current lasers count:', prev.length, 'Adding new laser');
-              return [...prev, newLaser];
-            });
+            lasersRef.current = [...lasersRef.current, newLaser];
+            setLasers(lasersRef.current);
             playLaserFire();
           }
         });
@@ -437,18 +436,18 @@ const BreakoutGame: React.FC = () => {
     });
 
     // Update lasers
-    setLasers(prev => {
-      return prev.map(laser => ({
-        ...laser,
-        y: laser.y + laser.speed
-      })).filter(laser => laser.y <= GAME_HEIGHT); // Keep lasers until they reach bottom edge
-    });
+    lasersRef.current = lasersRef.current.map(laser => ({
+      ...laser,
+      y: laser.y + laser.speed
+    })).filter(laser => laser.y <= GAME_HEIGHT); // Keep lasers until they reach bottom edge
+    setLasers(lasersRef.current);
 
     // Check laser-paddle collisions
-    lasers.forEach(laser => {
+    lasersRef.current.forEach(laser => {
       if (checkLaserPaddleCollision(laser, paddle)) {
         // Remove the laser
-        setLasers(prev => prev.filter(l => l !== laser));
+        lasersRef.current = lasersRef.current.filter(l => l !== laser);
+        setLasers(lasersRef.current);
         
         // Create explosion effect at paddle
         const explosionParticles = [];
@@ -486,6 +485,7 @@ const BreakoutGame: React.FC = () => {
             ball.dy = -2.5;
             
             // Clear any remaining lasers
+            lasersRef.current = [];
             setLasers([]);
           }
           return newLives;
@@ -784,8 +784,8 @@ const BreakoutGame: React.FC = () => {
     });
 
     // Draw lasers
-    console.log('Drawing lasers, count:', lasers.length);
-    lasers.forEach((laser, index) => {
+    console.log('Drawing lasers, count:', lasersRef.current.length);
+    lasersRef.current.forEach((laser, index) => {
       console.log(`Laser ${index} at:`, laser.x, laser.y, 'size:', laser.width, laser.height);
       // Draw laser beam with glow effect
       ctx.fillStyle = getComputedColor('--destructive');
@@ -832,6 +832,7 @@ const BreakoutGame: React.FC = () => {
     setExplosionEffect({ active: false, particles: [] });
     setWarpEffect({ active: true, scale: 0, opacity: 0 });
     setDebris([]);
+    lasersRef.current = [];
     setLasers([]);
     invaderDirectionRef.current = 1;
     setInvaderFrameCount(0);
