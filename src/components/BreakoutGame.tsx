@@ -60,11 +60,15 @@ const GAME_HEIGHT = 600;
 const PADDLE_WIDTH = 32;
 const PADDLE_HEIGHT = 32;
 const BALL_RADIUS = 8;
-const INVADER_ROWS = 2;
-const INVADER_COLS = 2;
-const INVADER_WIDTH = 128; // 4x larger than original 32
-const INVADER_HEIGHT = 96; // 4x larger than original 24
-const INVADER_PADDING = 8;
+const INVADER_ROWS = 3;
+const INVADER_COLS = 12; // Wider formation to fill screen
+const LARGE_INVADER_WIDTH = 64;
+const LARGE_INVADER_HEIGHT = 48;
+const MEDIUM_INVADER_WIDTH = 48;
+const MEDIUM_INVADER_HEIGHT = 36;
+const SMALL_INVADER_WIDTH = 32;
+const SMALL_INVADER_HEIGHT = 24;
+const INVADER_PADDING = 4;
 const INVADER_SPEED = 0.5;
 const INVADER_DROP_SPEED = 16;
 
@@ -130,23 +134,88 @@ const BreakoutGame: React.FC = () => {
   // Initialize space invaders
   const initializeInvaders = useCallback(() => {
     const invaders: Invader[] = [];
-    const startX = (GAME_WIDTH - (INVADER_COLS * (INVADER_WIDTH + INVADER_PADDING) - INVADER_PADDING)) / 2;
     const startY = 80;
     
-    for (let row = 0; row < INVADER_ROWS; row++) {
-      for (let col = 0; col < INVADER_COLS; col++) {
+    // Row 0 & 1: 4x4 grid of large invaders in center, medium invaders on sides
+    for (let row = 0; row < 2; row++) {
+      // Calculate positions for full row formation
+      const totalWidth = GAME_WIDTH - 60; // Leave margins
+      const largeGridWidth = 4 * LARGE_INVADER_WIDTH + 3 * INVADER_PADDING;
+      const remainingWidth = totalWidth - largeGridWidth;
+      const mediumsPerSide = Math.floor(remainingWidth / (2 * (MEDIUM_INVADER_WIDTH + INVADER_PADDING)));
+      
+      let currentX = 30; // Start margin
+      
+      // Left side medium invaders
+      for (let i = 0; i < mediumsPerSide; i++) {
         invaders.push({
-          x: startX + col * (INVADER_WIDTH + INVADER_PADDING),
-          y: startY + row * (INVADER_HEIGHT + INVADER_PADDING),
-          width: INVADER_WIDTH,
-          height: INVADER_HEIGHT,
+          x: currentX,
+          y: startY + row * (Math.max(LARGE_INVADER_HEIGHT, MEDIUM_INVADER_HEIGHT) + INVADER_PADDING),
+          width: MEDIUM_INVADER_WIDTH,
+          height: MEDIUM_INVADER_HEIGHT,
+          color: INVADER_COLORS[row + 1],
+          destroyed: false,
+          row,
+          col: i,
+          size: 'medium'
+        });
+        currentX += MEDIUM_INVADER_WIDTH + INVADER_PADDING;
+      }
+      
+      // Center the 4x4 large invader grid
+      const largeStartX = (GAME_WIDTH - largeGridWidth) / 2;
+      
+      // 4x4 grid of large invaders in center
+      for (let col = 0; col < 4; col++) {
+        invaders.push({
+          x: largeStartX + col * (LARGE_INVADER_WIDTH + INVADER_PADDING),
+          y: startY + row * (Math.max(LARGE_INVADER_HEIGHT, MEDIUM_INVADER_HEIGHT) + INVADER_PADDING),
+          width: LARGE_INVADER_WIDTH,
+          height: LARGE_INVADER_HEIGHT,
           color: INVADER_COLORS[row],
           destroyed: false,
           row,
-          col,
+          col: mediumsPerSide + col,
           size: 'large'
         });
       }
+      
+      // Right side medium invaders
+      currentX = largeStartX + largeGridWidth + INVADER_PADDING;
+      for (let i = 0; i < mediumsPerSide; i++) {
+        invaders.push({
+          x: currentX,
+          y: startY + row * (Math.max(LARGE_INVADER_HEIGHT, MEDIUM_INVADER_HEIGHT) + INVADER_PADDING),
+          width: MEDIUM_INVADER_WIDTH,
+          height: MEDIUM_INVADER_HEIGHT,
+          color: INVADER_COLORS[row + 1],
+          destroyed: false,
+          row,
+          col: mediumsPerSide + 4 + i,
+          size: 'medium'
+        });
+        currentX += MEDIUM_INVADER_WIDTH + INVADER_PADDING;
+      }
+    }
+    
+    // Row 2: Single row of small invaders underneath
+    const smallRowY = startY + 2 * (Math.max(LARGE_INVADER_HEIGHT, MEDIUM_INVADER_HEIGHT) + INVADER_PADDING);
+    const smallsAcrossScreen = Math.floor((GAME_WIDTH - 60) / (SMALL_INVADER_WIDTH + INVADER_PADDING));
+    const smallRowWidth = smallsAcrossScreen * (SMALL_INVADER_WIDTH + INVADER_PADDING) - INVADER_PADDING;
+    const smallStartX = (GAME_WIDTH - smallRowWidth) / 2;
+    
+    for (let col = 0; col < smallsAcrossScreen; col++) {
+      invaders.push({
+        x: smallStartX + col * (SMALL_INVADER_WIDTH + INVADER_PADDING),
+        y: smallRowY,
+        width: SMALL_INVADER_WIDTH,
+        height: SMALL_INVADER_HEIGHT,
+        color: INVADER_COLORS[2],
+        destroyed: false,
+        row: 2,
+        col,
+        size: 'small'
+      });
     }
     
     invadersRef.current = invaders;
