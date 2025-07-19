@@ -92,6 +92,7 @@ const BreakoutGame: React.FC = () => {
   const lasersRef = useRef<Laser[]>([]);
   const [invaderFrameCount, setInvaderFrameCount] = useState(0);
   const invaderDirectionRef = useRef<1 | -1>(1);
+  const invaderSpeedRef = useRef<number>(15);
   
   const ballRef = useRef<Ball>({
     x: GAME_WIDTH / 2,
@@ -137,6 +138,7 @@ const BreakoutGame: React.FC = () => {
     
     invadersRef.current = invaders;
     invaderDirectionRef.current = 1;
+    invaderSpeedRef.current = 15; // Reset speed to initial value
     setInvaderFrameCount(0);
   }, []);
 
@@ -387,27 +389,29 @@ const BreakoutGame: React.FC = () => {
           let currentDirection = invaderDirectionRef.current;
           
           // Only change direction if we're actually at the wall and moving towards it
-          if (currentDirection === 1 && rightMost + 15 >= GAME_WIDTH - 30) {
+          if (currentDirection === 1 && rightMost + invaderSpeedRef.current >= GAME_WIDTH - 30) {
             currentDirection = -1;
             invaderDirectionRef.current = -1;
-            console.log('Changed direction to LEFT');
+            invaderSpeedRef.current += 2; // Increase speed when changing direction
+            console.log('Changed direction to LEFT, new speed:', invaderSpeedRef.current);
             // Move all invaders down when changing direction
             activeInvaders.forEach(invader => {
               invader.y += INVADER_DROP_SPEED;
             });
-          } else if (currentDirection === -1 && leftMost - 15 <= 30) {
+          } else if (currentDirection === -1 && leftMost - invaderSpeedRef.current <= 30) {
             currentDirection = 1;
             invaderDirectionRef.current = 1;
-            console.log('Changed direction to RIGHT');
+            invaderSpeedRef.current += 2; // Increase speed when changing direction
+            console.log('Changed direction to RIGHT, new speed:', invaderSpeedRef.current);
             // Move all invaders down when changing direction
             activeInvaders.forEach(invader => {
               invader.y += INVADER_DROP_SPEED;
             });
           }
           
-          // Move all invaders using the current direction
+          // Move all invaders using the current direction and speed
           activeInvaders.forEach(invader => {
-            invader.x += currentDirection * 15;
+            invader.x += currentDirection * invaderSpeedRef.current;
           });
           
           // Play urgent invader movement sound
@@ -924,6 +928,7 @@ const BreakoutGame: React.FC = () => {
     lasersRef.current = [];
     setLasers([]);
     invaderDirectionRef.current = 1;
+    invaderSpeedRef.current = 15; // Reset speed to initial value
     setInvaderFrameCount(0);
     ballRef.current = {
       x: GAME_WIDTH / 2,
