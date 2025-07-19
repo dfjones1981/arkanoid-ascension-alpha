@@ -331,8 +331,8 @@ const BreakoutGame: React.FC = () => {
     setInvaderFrameCount(prev => {
       const newCount = prev + 1;
       
-      // Move invaders every 60 frames (1 second at 60fps)
-      if (newCount >= 60) {
+      // Move invaders every 90 frames (1.5 seconds at 60fps)
+      if (newCount >= 90) {
         const activeInvaders = invaders.filter(inv => !inv.destroyed && !inv.spawning);
         
         if (activeInvaders.length > 0) {
