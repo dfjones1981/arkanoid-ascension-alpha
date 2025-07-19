@@ -379,25 +379,27 @@ const BreakoutGame: React.FC = () => {
           
           // Play urgent invader movement sound
           playInvaderMove();
-          
-          // Random laser firing - each invader has a chance to fire
-          if (Math.random() < 0.3) { // 30% chance per movement cycle for more frequent firing
-            const firingInvader = activeInvaders[Math.floor(Math.random() * activeInvaders.length)];
-            if (firingInvader) {
-              const newLaser: Laser = {
-                x: firingInvader.x + firingInvader.width / 2 - 2,
-                y: firingInvader.y + firingInvader.height,
-                width: 4,
-                height: 12,
-                speed: 3
-              };
-              setLasers(prev => [...prev, newLaser]);
-              playLaserFire();
-            }
-          }
         }
         
         return 0; // Reset counter
+      }
+      
+      // Check for laser firing every 30 frames (0.5 seconds) regardless of movement
+      if (newCount % 30 === 0) {
+        const activeInvaders = invaders.filter(inv => !inv.destroyed && !inv.spawning);
+        activeInvaders.forEach(invader => {
+          if (Math.random() < 0.02) { // 2% chance per invader per check = more frequent firing
+            const newLaser: Laser = {
+              x: invader.x + invader.width / 2 - 2,
+              y: invader.y + invader.height,
+              width: 4,
+              height: 12,
+              speed: 3
+            };
+            setLasers(prev => [...prev, newLaser]);
+            playLaserFire();
+          }
+        });
       }
       
       return newCount;
