@@ -60,11 +60,11 @@ const INVADER_SPEED = 0.5;
 const INVADER_DROP_SPEED = 16;
 
 const INVADER_COLORS = [
-  'destructive',
-  'warning', 
-  'accent',
-  'secondary',
-  'primary'
+  'brick-purple',
+  'brick-blue', 
+  'brick-green',
+  'brick-orange',
+  'brick-yellow'
 ];
 
 const BreakoutGame: React.FC = () => {
