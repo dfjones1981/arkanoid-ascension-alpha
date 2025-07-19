@@ -474,19 +474,23 @@ const BreakoutGame: React.FC = () => {
           const centerX = invader.x + invader.width / 2;
           const centerY = invader.y + invader.height / 2;
           
+          // Calculate proper spacing for medium invaders
+          const mediumWidth = invader.width / 2;
+          const mediumSpacing = mediumWidth + INVADER_PADDING;
+          
           for (let i = 0; i < 2; i++) {
-            const targetX = invader.x + (i * invader.width * 0.8);
+            const targetX = invader.x + (i * mediumSpacing);
             const targetY = invader.y;
             
             newInvaders.push({
-              x: centerX - invader.width / 4, // Start from center
+              x: centerX - mediumWidth / 2, // Start from center
               y: centerY - invader.height / 4,
-              width: invader.width / 2,
+              width: mediumWidth,
               height: invader.height / 2,
               color: INVADER_COLORS[Math.floor(Math.random() * INVADER_COLORS.length)],
               destroyed: false,
               row: invader.row,
-              col: invader.col + i,
+              col: invader.col * 2 + i, // Proper column indexing
               size: 'medium' as const,
               spawning: true,
               spawnRotation: Math.random() * Math.PI * 2,
@@ -502,19 +506,23 @@ const BreakoutGame: React.FC = () => {
           const centerX = invader.x + invader.width / 2;
           const centerY = invader.y + invader.height / 2;
           
+          // Calculate proper spacing for small invaders
+          const smallWidth = invader.width / 2;
+          const smallSpacing = smallWidth + INVADER_PADDING / 2;
+          
           for (let i = 0; i < 2; i++) {
-            const targetX = invader.x + (i * invader.width * 0.9);
+            const targetX = invader.x + (i * smallSpacing);
             const targetY = invader.y;
             
             newInvaders.push({
-              x: centerX - invader.width / 4, // Start from center
+              x: centerX - smallWidth / 2, // Start from center
               y: centerY - invader.height / 4,
-              width: invader.width / 2,
+              width: smallWidth,
               height: invader.height / 2,
               color: INVADER_COLORS[Math.floor(Math.random() * INVADER_COLORS.length)],
               destroyed: false,
               row: invader.row,
-              col: invader.col + i,
+              col: invader.col * 2 + i, // Proper column indexing
               size: 'small' as const,
               spawning: true,
               spawnRotation: Math.random() * Math.PI * 2,
