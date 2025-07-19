@@ -396,7 +396,11 @@ const BreakoutGame: React.FC = () => {
               height: 12,
               speed: 3
             };
-            setLasers(prev => [...prev, newLaser]);
+            console.log('Creating laser at:', newLaser.x, newLaser.y, 'from invader at:', invader.x, invader.y);
+            setLasers(prev => {
+              console.log('Current lasers count:', prev.length, 'Adding new laser');
+              return [...prev, newLaser];
+            });
             playLaserFire();
           }
         });
@@ -780,7 +784,9 @@ const BreakoutGame: React.FC = () => {
     });
 
     // Draw lasers
-    lasers.forEach(laser => {
+    console.log('Drawing lasers, count:', lasers.length);
+    lasers.forEach((laser, index) => {
+      console.log(`Laser ${index} at:`, laser.x, laser.y, 'size:', laser.width, laser.height);
       // Draw laser beam with glow effect
       ctx.fillStyle = getComputedColor('--destructive');
       ctx.fillRect(laser.x, laser.y, laser.width, laser.height);
