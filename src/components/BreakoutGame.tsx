@@ -1,6 +1,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useRetroSounds } from '@/hooks/useRetroSounds';
 
 interface Ball {
   x: number;
@@ -70,6 +71,7 @@ const INVADER_COLORS = [
 const BreakoutGame: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
+  const { playWallHit, playPaddleHit, playInvaderDestroyed, playInvaderMove } = useRetroSounds();
   
   const [gameState, setGameState] = useState<'playing' | 'paused' | 'gameOver' | 'won'>('playing');
   const [score, setScore] = useState(0);
@@ -357,6 +359,9 @@ const BreakoutGame: React.FC = () => {
           activeInvaders.forEach(invader => {
             invader.x += currentDirection * 15;
           });
+          
+          // Play invader movement sound
+          playInvaderMove();
         }
         
         return 0; // Reset counter
@@ -409,9 +414,11 @@ const BreakoutGame: React.FC = () => {
     // Ball collision with walls
     if (ball.x - ball.radius <= 0 || ball.x + ball.radius >= GAME_WIDTH) {
       ball.dx = -ball.dx;
+      playWallHit();
     }
     if (ball.y - ball.radius <= 0) {
       ball.dy = -ball.dy;
+      playWallHit();
     }
 
     // Ball collision with paddle
@@ -436,6 +443,9 @@ const BreakoutGame: React.FC = () => {
       // Ensure ball moves away from paddle
       ball.dy = -Math.abs(ball.dy);
       
+      // Play paddle hit sound
+      playPaddleHit();
+      
       // Limit ball speed
       const speed = Math.sqrt(ball.dx ** 2 + ball.dy ** 2);
       if (speed > 8) {
@@ -449,6 +459,9 @@ const BreakoutGame: React.FC = () => {
       if (checkBallInvaderCollision(ball, invader)) {
         invader.destroyed = true;
         ball.dy = -ball.dy;
+        
+        // Play invader destroyed sound
+        playInvaderDestroyed();
         
         // Create explosion effect
         const explosionParticles = [];
