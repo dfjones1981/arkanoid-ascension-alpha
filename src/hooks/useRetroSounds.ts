@@ -1,10 +1,11 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import * as Tone from 'tone';
 
 export const useRetroSounds = () => {
   const synthRef = useRef<Tone.Synth | null>(null);
   const isInitialized = useRef(false);
   const invaderMoveToggle = useRef(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
 
   const initializeSynth = useCallback(async () => {
     if (isInitialized.current) return;
@@ -30,6 +31,7 @@ export const useRetroSounds = () => {
   }, []);
 
   const playWallHit = useCallback(async () => {
+    if (!soundEnabled) return;
     await initializeSynth();
     if (!synthRef.current) return;
     
@@ -39,9 +41,10 @@ export const useRetroSounds = () => {
     } catch (error) {
       console.warn('Wall hit sound failed:', error);
     }
-  }, [initializeSynth]);
+  }, [initializeSynth, soundEnabled]);
 
   const playPaddleHit = useCallback(async () => {
+    if (!soundEnabled) return;
     await initializeSynth();
     if (!synthRef.current) return;
     
@@ -55,9 +58,10 @@ export const useRetroSounds = () => {
     } catch (error) {
       console.warn('Paddle hit sound failed:', error);
     }
-  }, [initializeSynth]);
+  }, [initializeSynth, soundEnabled]);
 
   const playInvaderDestroyed = useCallback(async () => {
+    if (!soundEnabled) return;
     await initializeSynth();
     if (!synthRef.current) return;
     
@@ -72,9 +76,10 @@ export const useRetroSounds = () => {
     } catch (error) {
       console.warn('Invader destroyed sound failed:', error);
     }
-  }, [initializeSynth]);
+  }, [initializeSynth, soundEnabled]);
 
   const playInvaderMove = useCallback(async () => {
+    if (!soundEnabled) return;
     await initializeSynth();
     if (!synthRef.current) return;
     
@@ -86,9 +91,10 @@ export const useRetroSounds = () => {
     } catch (error) {
       console.warn('Invader move sound failed:', error);
     }
-  }, [initializeSynth]);
+  }, [initializeSynth, soundEnabled]);
 
   const playDefeat = useCallback(async () => {
+    if (!soundEnabled) return;
     await initializeSynth();
     if (!synthRef.current) return;
     
@@ -103,9 +109,10 @@ export const useRetroSounds = () => {
     } catch (error) {
       console.warn('Defeat sound failed:', error);
     }
-  }, [initializeSynth]);
+  }, [initializeSynth, soundEnabled]);
 
   const playGameOver = useCallback(async () => {
+    if (!soundEnabled) return;
     await initializeSynth();
     if (!synthRef.current) return;
     
@@ -120,9 +127,10 @@ export const useRetroSounds = () => {
     } catch (error) {
       console.warn('Game over sound failed:', error);
     }
-  }, [initializeSynth]);
+  }, [initializeSynth, soundEnabled]);
 
   const playVictory = useCallback(async () => {
+    if (!soundEnabled) return;
     await initializeSynth();
     if (!synthRef.current) return;
     
@@ -142,7 +150,11 @@ export const useRetroSounds = () => {
     } catch (error) {
       console.warn('Victory sound failed:', error);
     }
-  }, [initializeSynth]);
+  }, [initializeSynth, soundEnabled]);
+
+  const toggleSound = useCallback(() => {
+    setSoundEnabled(prev => !prev);
+  }, []);
 
   return {
     playWallHit,
@@ -151,6 +163,8 @@ export const useRetroSounds = () => {
     playInvaderMove,
     playDefeat,
     playGameOver,
-    playVictory
+    playVictory,
+    toggleSound,
+    soundEnabled
   };
 };

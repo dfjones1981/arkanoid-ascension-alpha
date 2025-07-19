@@ -71,7 +71,7 @@ const INVADER_COLORS = [
 const BreakoutGame: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
-  const { playWallHit, playPaddleHit, playInvaderDestroyed, playInvaderMove, playDefeat, playGameOver, playVictory } = useRetroSounds();
+  const { playWallHit, playPaddleHit, playInvaderDestroyed, playInvaderMove, playDefeat, playGameOver, playVictory, toggleSound, soundEnabled } = useRetroSounds();
   
   const [gameState, setGameState] = useState<'playing' | 'paused' | 'gameOver' | 'won'>('playing');
   const [score, setScore] = useState(0);
@@ -826,6 +826,13 @@ const BreakoutGame: React.FC = () => {
           className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 disabled:opacity-50"
         >
           {gameState === 'paused' ? 'Resume' : 'Pause'}
+        </button>
+        
+        <button
+          onClick={toggleSound}
+          className="px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/90"
+        >
+          {soundEnabled ? '🔊 Sound On' : '🔇 Sound Off'}
         </button>
         
         <button
