@@ -311,13 +311,14 @@ const BreakoutGame: React.FC = () => {
           invader.x += dx * 0.1;
           invader.y += dy * 0.1;
           
-          // Stop spawning when close to target
-          if (Math.abs(dx) < 2 && Math.abs(dy) < 2 && invader.spawnScale >= 0.95) {
+          // Stop spawning when close to target - use smaller threshold for better alignment
+          if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5 && invader.spawnScale >= 0.95) {
             invader.spawning = false;
             invader.spawnRotation = 0;
             invader.spawnScale = 1;
-            invader.x = invader.targetX;
-            invader.y = invader.targetY;
+            // Ensure exact positioning to avoid floating point errors
+            invader.x = Math.round(invader.targetX);
+            invader.y = Math.round(invader.targetY);
             delete invader.targetX;
             delete invader.targetY;
           }
@@ -480,7 +481,7 @@ const BreakoutGame: React.FC = () => {
           
           for (let i = 0; i < 2; i++) {
             const targetX = invader.x + (i * mediumSpacing);
-            const targetY = invader.y;
+            const targetY = Math.round(invader.y); // Ensure exact row alignment
             
             newInvaders.push({
               x: centerX - mediumWidth / 2, // Start from center
@@ -512,7 +513,7 @@ const BreakoutGame: React.FC = () => {
           
           for (let i = 0; i < 2; i++) {
             const targetX = invader.x + (i * smallSpacing);
-            const targetY = invader.y;
+            const targetY = Math.round(invader.y); // Ensure exact row alignment
             
             newInvaders.push({
               x: centerX - smallWidth / 2, // Start from center
