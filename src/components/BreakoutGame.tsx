@@ -380,8 +380,8 @@ const BreakoutGame: React.FC = () => {
           // Play urgent invader movement sound
           playInvaderMove();
           
-          // Random laser firing - each invader has a small chance to fire
-          if (Math.random() < 0.1) { // 10% chance per movement cycle
+          // Random laser firing - each invader has a chance to fire
+          if (Math.random() < 0.3) { // 30% chance per movement cycle for more frequent firing
             const firingInvader = activeInvaders[Math.floor(Math.random() * activeInvaders.length)];
             if (firingInvader) {
               const newLaser: Laser = {
@@ -435,7 +435,7 @@ const BreakoutGame: React.FC = () => {
       return prev.map(laser => ({
         ...laser,
         y: laser.y + laser.speed
-      })).filter(laser => laser.y < GAME_HEIGHT); // Remove lasers that went off screen
+      })).filter(laser => laser.y <= GAME_HEIGHT); // Keep lasers until they reach bottom edge
     });
 
     // Check laser-paddle collisions
