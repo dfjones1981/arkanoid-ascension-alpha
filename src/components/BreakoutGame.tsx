@@ -47,6 +47,14 @@ interface Debris {
   rotationSpeed: number;
 }
 
+interface Laser {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  speed: number;
+}
+
 const GAME_WIDTH = 800;
 const GAME_HEIGHT = 600;
 const PADDLE_WIDTH = 32;
@@ -71,7 +79,7 @@ const INVADER_COLORS = [
 const BreakoutGame: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
-  const { playWallHit, playPaddleHit, playInvaderDestroyed, playInvaderMove, playDefeat, playGameOver, playVictory, toggleSound, soundEnabled } = useRetroSounds();
+  const { playWallHit, playPaddleHit, playInvaderDestroyed, playInvaderMove, playDefeat, playGameOver, playVictory, playLaserFire, toggleSound, soundEnabled } = useRetroSounds();
   
   const [gameState, setGameState] = useState<'playing' | 'paused' | 'gameOver' | 'won'>('playing');
   const [score, setScore] = useState(0);
@@ -80,6 +88,7 @@ const BreakoutGame: React.FC = () => {
   const [explosionEffect, setExplosionEffect] = useState<{active: boolean, particles: Array<{x: number, y: number, dx: number, dy: number, life: number}>}>({active: false, particles: []});
   const [warpEffect, setWarpEffect] = useState<{active: boolean, scale: number, opacity: number}>({active: false, scale: 0, opacity: 0});
   const [debris, setDebris] = useState<Debris[]>([]);
+  const [lasers, setLasers] = useState<Laser[]>([]);
   const [invaderFrameCount, setInvaderFrameCount] = useState(0);
   const invaderDirectionRef = useRef<1 | -1>(1);
   
@@ -158,6 +167,14 @@ const BreakoutGame: React.FC = () => {
            debris.x - debris.size < paddle.x + paddle.width &&
            debris.y + debris.size > paddle.y &&
            debris.y - debris.size < paddle.y + paddle.height;
+  };
+
+  // Check laser collision with paddle
+  const checkLaserPaddleCollision = (laser: Laser, paddle: Paddle): boolean => {
+    return laser.x + laser.width > paddle.x &&
+           laser.x < paddle.x + paddle.width &&
+           laser.y + laser.height > paddle.y &&
+           laser.y < paddle.y + paddle.height;
   };
 
   // Create debris from destroyed invader
@@ -362,6 +379,22 @@ const BreakoutGame: React.FC = () => {
           
           // Play urgent invader movement sound
           playInvaderMove();
+          
+          // Random laser firing - each invader has a small chance to fire
+          if (Math.random() < 0.1) { // 10% chance per movement cycle
+            const firingInvader = activeInvaders[Math.floor(Math.random() * activeInvaders.length)];
+            if (firingInvader) {
+              const newLaser: Laser = {
+                x: firingInvader.x + firingInvader.width / 2 - 2,
+                y: firingInvader.y + firingInvader.height,
+                width: 4,
+                height: 12,
+                speed: 3
+              };
+              setLasers(prev => [...prev, newLaser]);
+              playLaserFire();
+            }
+          }
         }
         
         return 0; // Reset counter
@@ -395,6 +428,63 @@ const BreakoutGame: React.FC = () => {
 
         return piece;
       }).filter(piece => piece.life > 0 && piece.y < GAME_HEIGHT + 50);
+    });
+
+    // Update lasers
+    setLasers(prev => {
+      return prev.map(laser => ({
+        ...laser,
+        y: laser.y + laser.speed
+      })).filter(laser => laser.y < GAME_HEIGHT); // Remove lasers that went off screen
+    });
+
+    // Check laser-paddle collisions
+    lasers.forEach(laser => {
+      if (checkLaserPaddleCollision(laser, paddle)) {
+        // Remove the laser
+        setLasers(prev => prev.filter(l => l !== laser));
+        
+        // Create explosion effect at paddle
+        const explosionParticles = [];
+        for (let i = 0; i < 20; i++) {
+          explosionParticles.push({
+            x: paddle.x + paddle.width / 2,
+            y: paddle.y + paddle.height / 2,
+            dx: (Math.random() - 0.5) * 10,
+            dy: (Math.random() - 0.5) * 10,
+            life: 1
+          });
+        }
+        setExplosionEffect({ active: true, particles: explosionParticles });
+        
+        // Lose a life
+        setLives(prev => {
+          const newLives = prev - 1;
+          if (newLives <= 0) {
+            setGameState('gameOver');
+            playGameOver();
+            toast({
+              title: "Game Over!",
+              description: `Final Score: ${score}`,
+              variant: "destructive"
+            });
+          } else {
+            playDefeat();
+            // Reset ball and attach to paddle for next life
+            setBallAttached(true);
+            setWarpEffect({ active: true, scale: 0, opacity: 0 });
+            ball.x = paddle.x + paddle.width / 2;
+            const paddleRadius = paddle.width / 2;
+            ball.y = paddle.y + paddle.height / 2 - paddleRadius - ball.radius;
+            ball.dx = 2.5;
+            ball.dy = -2.5;
+            
+            // Clear any remaining lasers
+            setLasers([]);
+          }
+          return newLives;
+        });
+      }
     });
 
     // Ball attachment logic
@@ -687,6 +777,19 @@ const BreakoutGame: React.FC = () => {
       ctx.restore();
     });
 
+    // Draw lasers
+    lasers.forEach(laser => {
+      // Draw laser beam with glow effect
+      ctx.fillStyle = getComputedColor('--destructive');
+      ctx.fillRect(laser.x, laser.y, laser.width, laser.height);
+      
+      // Add glow
+      ctx.shadowColor = getComputedColor('--destructive');
+      ctx.shadowBlur = 8;
+      ctx.fillRect(laser.x, laser.y, laser.width, laser.height);
+      ctx.shadowBlur = 0;
+    });
+
     animationRef.current = requestAnimationFrame(gameLoop);
   }, [gameState, score, toast, ballAttached, warpEffect, explosionEffect]);
 
@@ -721,6 +824,7 @@ const BreakoutGame: React.FC = () => {
     setExplosionEffect({ active: false, particles: [] });
     setWarpEffect({ active: true, scale: 0, opacity: 0 });
     setDebris([]);
+    setLasers([]);
     invaderDirectionRef.current = 1;
     setInvaderFrameCount(0);
     ballRef.current = {

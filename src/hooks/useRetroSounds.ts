@@ -161,6 +161,24 @@ export const useRetroSounds = () => {
     });
   }, []);
 
+  const playLaserFire = useCallback(async () => {
+    console.log('playLaserFire called, soundEnabled:', soundEnabled);
+    if (!soundEnabled) return;
+    await initializeSynth();
+    if (!synthRef.current) return;
+    
+    try {
+      // Sharp, quick laser fire sound - high pitched zap
+      synthRef.current.triggerAttackRelease("A5", "64n");
+      // Add harmonic for laser effect
+      setTimeout(() => {
+        synthRef.current?.triggerAttackRelease("A6", "64n");
+      }, 30);
+    } catch (error) {
+      console.warn('Laser fire sound failed:', error);
+    }
+  }, [initializeSynth, soundEnabled]);
+
   return {
     playWallHit,
     playPaddleHit,
@@ -169,6 +187,7 @@ export const useRetroSounds = () => {
     playDefeat,
     playGameOver,
     playVictory,
+    playLaserFire,
     toggleSound,
     soundEnabled
   };
