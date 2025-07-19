@@ -391,13 +391,12 @@ const BreakoutGame: React.FC = () => {
         activeInvaders.forEach(invader => {
           if (Math.random() < 0.02) { // 2% chance per invader per check = more frequent firing
             const newLaser: Laser = {
-              x: invader.x + invader.width / 2 - 2,
+              x: invader.x + invader.width / 2 - 2, // Center the 4px wide laser
               y: invader.y + invader.height,
               width: 4,
               height: 12,
               speed: 3
             };
-            console.log('Creating laser at:', newLaser.x, newLaser.y, 'from invader at:', invader.x, invader.y);
             lasersRef.current = [...lasersRef.current, newLaser];
             setLasers(lasersRef.current);
             playLaserFire();
@@ -784,9 +783,7 @@ const BreakoutGame: React.FC = () => {
     });
 
     // Draw lasers
-    console.log('Drawing lasers, count:', lasersRef.current.length);
     lasersRef.current.forEach((laser, index) => {
-      console.log(`Laser ${index} at:`, laser.x, laser.y, 'size:', laser.width, laser.height);
       // Draw laser beam with glow effect
       ctx.fillStyle = getComputedColor('--destructive');
       ctx.fillRect(laser.x, laser.y, laser.width, laser.height);
