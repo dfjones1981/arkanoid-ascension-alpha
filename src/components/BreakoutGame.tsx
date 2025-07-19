@@ -517,7 +517,7 @@ const BreakoutGame: React.FC = () => {
       if (newCount % 30 === 0) {
         const activeInvaders = invaders.filter(inv => !inv.destroyed && !inv.spawning);
         activeInvaders.forEach(invader => {
-          if (Math.random() < 0.02) { // 2% chance per invader per check = more frequent firing
+          if (Math.random() < 0.01) { // 1% chance per invader per check (reduced from 2%)
             const newLaser: Laser = {
               x: invader.x + invader.width / 2 - 2, // Center the 4px wide laser
               y: invader.y + invader.height,
