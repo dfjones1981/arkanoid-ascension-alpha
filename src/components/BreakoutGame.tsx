@@ -419,7 +419,7 @@ const BreakoutGame: React.FC = () => {
     }
 
     // Ball collision with paddle
-    if (checkBallPaddleCollision(ball, paddle)) {
+    if (!ballAttached && checkBallPaddleCollision(ball, paddle)) {
       const paddleCenterX = paddle.x + paddle.width / 2;
       const paddleCenterY = paddle.y + paddle.height / 2;
       
