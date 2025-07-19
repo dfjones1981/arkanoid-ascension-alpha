@@ -486,7 +486,7 @@ const BreakoutGame: React.FC = () => {
           if (currentDirection === 1 && rightMost + INVADER_MOVE_DISTANCE >= GAME_WIDTH - 30) {
             currentDirection = -1;
             invaderDirectionRef.current = -1;
-            invaderSpeedRef.current += 5; // Increase speed when changing direction
+            invaderSpeedRef.current += 0.5; // Gradual speed increase when changing direction
             console.log('Changed direction to LEFT, new speed:', invaderSpeedRef.current);
             // Move all invaders down when changing direction
             activeInvaders.forEach(invader => {
@@ -495,7 +495,7 @@ const BreakoutGame: React.FC = () => {
           } else if (currentDirection === -1 && leftMost - INVADER_MOVE_DISTANCE <= 30) {
             currentDirection = 1;
             invaderDirectionRef.current = 1;
-            invaderSpeedRef.current += 5; // Increase speed when changing direction
+            invaderSpeedRef.current += 0.5; // Gradual speed increase when changing direction
             console.log('Changed direction to RIGHT, new speed:', invaderSpeedRef.current);
             // Move all invaders down when changing direction
             activeInvaders.forEach(invader => {
@@ -802,6 +802,7 @@ const BreakoutGame: React.FC = () => {
             });
           }
           invadersRef.current = [...invaders.filter(inv => inv !== invader), ...newInvaders];
+          invaderSpeedRef.current += 0.2; // Small speed increase when destroying large invader
         } else if (invader.size === 'medium') {
           // Split into 2 small invaders with spin animation
           const newInvaders = [];
@@ -834,9 +835,10 @@ const BreakoutGame: React.FC = () => {
             });
           }
           invadersRef.current = [...invaders.filter(inv => inv !== invader), ...newInvaders];
+          invaderSpeedRef.current += 0.3; // Small speed increase when destroying medium invader
         } else if (invader.size === 'small') {
           // Small invaders are just destroyed - increase speed for remaining invaders
-          invaderSpeedRef.current += 1; // Speed up slightly with each small invader destroyed
+          invaderSpeedRef.current += 0.3; // Speed up slightly with each small invader destroyed
         }
         // Small invaders are just destroyed (no splitting)
         
