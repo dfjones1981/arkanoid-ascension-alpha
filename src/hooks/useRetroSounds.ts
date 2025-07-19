@@ -168,12 +168,16 @@ export const useRetroSounds = () => {
     if (!synthRef.current) return;
     
     try {
-      // Sharp, quick laser fire sound - high pitched zap
-      synthRef.current.triggerAttackRelease("A5", "64n");
-      // Add harmonic for laser effect
+      // Scary laser zap sound - quick frequency sweep downward
+      synthRef.current.triggerAttackRelease("A5", "32n");
+      // Add lower menacing tone immediately after
       setTimeout(() => {
-        synthRef.current?.triggerAttackRelease("A6", "64n");
-      }, 30);
+        synthRef.current?.triggerAttackRelease("E4", "64n");
+      }, 40);
+      // Add final scary low rumble
+      setTimeout(() => {
+        synthRef.current?.triggerAttackRelease("C3", "32n");
+      }, 80);
     } catch (error) {
       console.warn('Laser fire sound failed:', error);
     }
