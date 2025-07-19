@@ -136,15 +136,15 @@ const BreakoutGame: React.FC = () => {
     const invaders: Invader[] = [];
     const startY = 80;
     
-    // Row 0 & 1: 4x4 grid of large invaders in center, medium invaders on sides
+    // Row 0 & 1: 2x2 grid of large invaders in center, fewer medium invaders on sides
     for (let row = 0; row < 2; row++) {
-      // Calculate positions for full row formation
-      const totalWidth = GAME_WIDTH - 60; // Leave margins
-      const largeGridWidth = 4 * LARGE_INVADER_WIDTH + 3 * INVADER_PADDING;
-      const remainingWidth = totalWidth - largeGridWidth;
-      const mediumsPerSide = Math.floor(remainingWidth / (2 * (MEDIUM_INVADER_WIDTH + INVADER_PADDING)));
+      // Calculate positions for formation with movement room
+      const largeGridWidth = 2 * LARGE_INVADER_WIDTH + 1 * INVADER_PADDING;
+      const sideMargin = 80; // More margin for movement
+      const availableWidth = GAME_WIDTH - (2 * sideMargin) - largeGridWidth;
+      const mediumsPerSide = 3; // Fixed number for better spacing
       
-      let currentX = 30; // Start margin
+      let currentX = sideMargin;
       
       // Left side medium invaders
       for (let i = 0; i < mediumsPerSide; i++) {
@@ -159,14 +159,14 @@ const BreakoutGame: React.FC = () => {
           col: i,
           size: 'medium'
         });
-        currentX += MEDIUM_INVADER_WIDTH + INVADER_PADDING;
+        currentX += MEDIUM_INVADER_WIDTH + INVADER_PADDING * 2; // More spacing
       }
       
-      // Center the 4x4 large invader grid
+      // Center the 2x2 large invader grid
       const largeStartX = (GAME_WIDTH - largeGridWidth) / 2;
       
-      // 4x4 grid of large invaders in center
-      for (let col = 0; col < 4; col++) {
+      // 2x2 grid of large invaders in center
+      for (let col = 0; col < 2; col++) {
         invaders.push({
           x: largeStartX + col * (LARGE_INVADER_WIDTH + INVADER_PADDING),
           y: startY + row * (Math.max(LARGE_INVADER_HEIGHT, MEDIUM_INVADER_HEIGHT) + INVADER_PADDING),
@@ -181,7 +181,7 @@ const BreakoutGame: React.FC = () => {
       }
       
       // Right side medium invaders
-      currentX = largeStartX + largeGridWidth + INVADER_PADDING;
+      currentX = GAME_WIDTH - sideMargin - (mediumsPerSide * (MEDIUM_INVADER_WIDTH + INVADER_PADDING * 2));
       for (let i = 0; i < mediumsPerSide; i++) {
         invaders.push({
           x: currentX,
@@ -191,10 +191,10 @@ const BreakoutGame: React.FC = () => {
           color: INVADER_COLORS[row + 1],
           destroyed: false,
           row,
-          col: mediumsPerSide + 4 + i,
+          col: mediumsPerSide + 2 + i,
           size: 'medium'
         });
-        currentX += MEDIUM_INVADER_WIDTH + INVADER_PADDING;
+        currentX += MEDIUM_INVADER_WIDTH + INVADER_PADDING * 2;
       }
     }
     
