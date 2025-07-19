@@ -4,6 +4,7 @@ import * as Tone from 'tone';
 export const useRetroSounds = () => {
   const synthRef = useRef<Tone.Synth | null>(null);
   const isInitialized = useRef(false);
+  const invaderMoveToggle = useRef(false);
 
   const initializeSynth = useCallback(async () => {
     if (isInitialized.current) return;
@@ -78,20 +79,10 @@ export const useRetroSounds = () => {
     if (!synthRef.current) return;
     
     try {
-      // Create urgent rhythmic electronic beat
-      // Use a lower bass note for menacing march effect
-      const bassNote = "E1";
-      synthRef.current.triggerAttackRelease(bassNote, "16n");
-      
-      // Add a quick electronic blip for urgency
-      setTimeout(() => {
-        synthRef.current?.triggerAttackRelease("A3", "32n");
-      }, 60);
-      
-      // Add another bass hit for the rhythmic march
-      setTimeout(() => {
-        synthRef.current?.triggerAttackRelease("C2", "16n");
-      }, 120);
+      // Alternate between two deep bass notes for classic Space Invaders march
+      invaderMoveToggle.current = !invaderMoveToggle.current;
+      const note = invaderMoveToggle.current ? "D1" : "F#1";
+      synthRef.current.triggerAttackRelease(note, "4n");
     } catch (error) {
       console.warn('Invader move sound failed:', error);
     }
