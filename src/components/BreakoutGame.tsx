@@ -48,8 +48,8 @@ interface Debris {
 
 const GAME_WIDTH = 800;
 const GAME_HEIGHT = 600;
-const PADDLE_WIDTH = 24;
-const PADDLE_HEIGHT = 24;
+const PADDLE_WIDTH = 32;
+const PADDLE_HEIGHT = 32;
 const BALL_RADIUS = 8;
 const INVADER_ROWS = 2;
 const INVADER_COLS = 2;
@@ -84,8 +84,8 @@ const BreakoutGame: React.FC = () => {
   const ballRef = useRef<Ball>({
     x: GAME_WIDTH / 2,
     y: GAME_HEIGHT - 50,
-    dx: 2.5,
-    dy: -2.5,
+    dx: 1.8,
+    dy: -1.8,
     radius: BALL_RADIUS
   });
   
@@ -298,7 +298,7 @@ const BreakoutGame: React.FC = () => {
       if (invader.spawning) {
         // Update spawn animation
         if (invader.spawnRotation !== undefined) {
-          invader.spawnRotation += 0.3;
+          invader.spawnRotation += 0.15;
         }
         if (invader.spawnScale !== undefined && invader.spawnScale < 1) {
           invader.spawnScale += 0.05;
