@@ -87,12 +87,25 @@ const BreakoutGame: React.FC = () => {
   const [ballAttached, setBallAttached] = useState(true);
   const [explosionEffect, setExplosionEffect] = useState<{active: boolean, particles: Array<{x: number, y: number, dx: number, dy: number, life: number}>}>({active: false, particles: []});
   const [warpEffect, setWarpEffect] = useState<{active: boolean, scale: number, opacity: number}>({active: false, scale: 0, opacity: 0});
+  
+  // Use refs for all game objects to avoid React re-renders during gameplay
   const [debris, setDebris] = useState<Debris[]>([]);
   const [lasers, setLasers] = useState<Laser[]>([]);
+  const debrisRef = useRef<Debris[]>([]);
   const lasersRef = useRef<Laser[]>([]);
   const [invaderFrameCount, setInvaderFrameCount] = useState(0);
   const invaderDirectionRef = useRef<1 | -1>(1);
   const invaderSpeedRef = useRef<number>(15);
+  
+  // Performance optimization: batch updates
+  const pendingStateUpdates = useRef({
+    debris: false,
+    lasers: false,
+    explosion: false,
+    lives: false,
+    score: false,
+    gameState: false
+  });
   
   const ballRef = useRef<Ball>({
     x: GAME_WIDTH / 2,
@@ -434,7 +447,6 @@ const BreakoutGame: React.FC = () => {
               speed: 3
             };
             lasersRef.current = [...lasersRef.current, newLaser];
-            setLasers(lasersRef.current);
             playLaserFire();
           }
         });
@@ -443,46 +455,46 @@ const BreakoutGame: React.FC = () => {
       return newCount;
     });
 
-    // Update debris physics
-    setDebris(prev => {
-      return prev.map(piece => {
-        // Apply gravity
-        piece.dy += 0.3;
-        piece.x += piece.dx;
-        piece.y += piece.dy;
-        piece.rotation += piece.rotationSpeed;
-        piece.life -= 0.008;
+    // Update debris physics (use ref for performance)
+    debrisRef.current = debrisRef.current.map(piece => {
+      // Apply gravity
+      piece.dy += 0.3;
+      piece.x += piece.dx;
+      piece.y += piece.dy;
+      piece.rotation += piece.rotationSpeed;
+      piece.life -= 0.008;
 
-        // Check collision with paddle
-        if (checkDebrisPaddleCollision(piece, paddle)) {
-          piece.dy = -Math.abs(piece.dy) * 0.6; // Bounce with some energy loss
-          piece.dx *= 0.8; // Apply some friction
-          piece.y = paddle.y - piece.size; // Position above paddle
-        }
+      // Check collision with paddle
+      if (checkDebrisPaddleCollision(piece, paddle)) {
+        piece.dy = -Math.abs(piece.dy) * 0.6; // Bounce with some energy loss
+        piece.dx *= 0.8; // Apply some friction
+        piece.y = paddle.y - piece.size; // Position above paddle
+      }
 
-        // Bounce off walls
-        if (piece.x <= 0 || piece.x >= GAME_WIDTH) {
-          piece.dx = -piece.dx * 0.7;
-          piece.x = Math.max(0, Math.min(GAME_WIDTH, piece.x));
-        }
+      // Bounce off walls
+      if (piece.x <= 0 || piece.x >= GAME_WIDTH) {
+        piece.dx = -piece.dx * 0.7;
+        piece.x = Math.max(0, Math.min(GAME_WIDTH, piece.x));
+      }
 
-        return piece;
-      }).filter(piece => piece.life > 0 && piece.y < GAME_HEIGHT + 50);
-    });
+      return piece;
+    }).filter(piece => piece.life > 0 && piece.y < GAME_HEIGHT + 50);
 
-    // Update lasers
+    // Update lasers (use ref for performance)
     lasersRef.current = lasersRef.current.map(laser => ({
       ...laser,
       y: laser.y + laser.speed
-    })).filter(laser => laser.y <= GAME_HEIGHT); // Keep lasers until they reach bottom edge
-    setLasers(lasersRef.current);
+    })).filter(laser => laser.y <= GAME_HEIGHT);
 
-    // Check laser-paddle collisions
-    lasersRef.current.forEach(laser => {
+    // Optimized collision detection - early exit and batch processing
+    const activeInvaders = invaders.filter(inv => !inv.destroyed && !inv.spawning);
+    
+    // Check laser-paddle collisions (more efficient)
+    for (let i = lasersRef.current.length - 1; i >= 0; i--) {
+      const laser = lasersRef.current[i];
       if (checkLaserPaddleCollision(laser, paddle)) {
-        // Remove the laser
-        lasersRef.current = lasersRef.current.filter(l => l !== laser);
-        setLasers(lasersRef.current);
+        // Remove the laser immediately
+        lasersRef.current.splice(i, 1);
         
         // Create explosion effect at paddle
         const explosionParticles = [];
@@ -521,15 +533,14 @@ const BreakoutGame: React.FC = () => {
             
             // Clear any remaining lasers
             lasersRef.current = [];
-            setLasers([]);
           }
           return newLives;
         });
+        break;
       }
-    });
+    }
 
-    // Check invader-paddle collisions
-    const activeInvaders = invaders.filter(inv => !inv.destroyed && !inv.spawning);
+    // Check invader-paddle collisions (optimized)
     for (const invader of activeInvaders) {
       if (checkInvaderPaddleCollision(invader, paddle)) {
         // Paddle hit by invader - create explosion and lose life
@@ -568,7 +579,6 @@ const BreakoutGame: React.FC = () => {
             
             // Clear any remaining lasers
             lasersRef.current = [];
-            setLasers([]);
           }
           return newLives;
         });
@@ -586,6 +596,14 @@ const BreakoutGame: React.FC = () => {
         });
         break;
       }
+    }
+
+    // Batch state updates at the end of frame for performance
+    if (debrisRef.current.length !== debris.length) {
+      setDebris([...debrisRef.current]);
+    }
+    if (lasersRef.current.length !== lasers.length) {
+      setLasers([...lasersRef.current]);
     }
 
     // Ball attachment logic
@@ -669,7 +687,7 @@ const BreakoutGame: React.FC = () => {
         
         // Create debris from destroyed invader
         const newDebris = createDebris(invader);
-        setDebris(prev => [...prev, ...newDebris]);
+        debrisRef.current = [...debrisRef.current, ...newDebris];
         
         // Handle invader splitting
         if (invader.size === 'large') {
@@ -868,7 +886,7 @@ const BreakoutGame: React.FC = () => {
     }
 
     // Draw falling debris
-    debris.forEach(piece => {
+    debrisRef.current.forEach(piece => {
       ctx.save();
       ctx.translate(piece.x, piece.y);
       ctx.rotate(piece.rotation);
@@ -924,6 +942,7 @@ const BreakoutGame: React.FC = () => {
     setBallAttached(true);
     setExplosionEffect({ active: false, particles: [] });
     setWarpEffect({ active: true, scale: 0, opacity: 0 });
+    debrisRef.current = [];
     setDebris([]);
     lasersRef.current = [];
     setLasers([]);
