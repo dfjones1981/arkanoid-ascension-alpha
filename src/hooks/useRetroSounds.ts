@@ -31,6 +31,7 @@ export const useRetroSounds = () => {
   }, []);
 
   const playWallHit = useCallback(async () => {
+    console.log('playWallHit called, soundEnabled:', soundEnabled);
     if (!soundEnabled) return;
     await initializeSynth();
     if (!synthRef.current) return;
@@ -44,6 +45,7 @@ export const useRetroSounds = () => {
   }, [initializeSynth, soundEnabled]);
 
   const playPaddleHit = useCallback(async () => {
+    console.log('playPaddleHit called, soundEnabled:', soundEnabled);
     if (!soundEnabled) return;
     await initializeSynth();
     if (!synthRef.current) return;
@@ -153,7 +155,10 @@ export const useRetroSounds = () => {
   }, [initializeSynth, soundEnabled]);
 
   const toggleSound = useCallback(() => {
-    setSoundEnabled(prev => !prev);
+    setSoundEnabled(prev => {
+      console.log('Sound toggle - was:', prev, 'now will be:', !prev);
+      return !prev;
+    });
   }, []);
 
   return {
