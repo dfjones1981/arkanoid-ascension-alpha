@@ -359,9 +359,6 @@ const BreakoutGame: React.FC = () => {
           activeInvaders.forEach(invader => {
             invader.x += currentDirection * 15;
           });
-          
-          // Play invader movement sound
-          playInvaderMove();
         }
         
         return 0; // Reset counter
