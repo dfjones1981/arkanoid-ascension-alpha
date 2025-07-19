@@ -832,6 +832,9 @@ const BreakoutGame: React.FC = () => {
             });
           }
           invadersRef.current = [...invaders.filter(inv => inv !== invader), ...newInvaders];
+        } else if (invader.size === 'small') {
+          // Small invaders are just destroyed - increase speed for remaining invaders
+          invaderSpeedRef.current += 1; // Speed up slightly with each small invader destroyed
         }
         // Small invaders are just destroyed (no splitting)
         
