@@ -87,10 +87,69 @@ export const useRetroSounds = () => {
     }
   }, [initializeSynth]);
 
+  const playDefeat = useCallback(async () => {
+    await initializeSynth();
+    if (!synthRef.current) return;
+    
+    try {
+      // Sad descending sound for losing a life
+      const notes = ["F4", "D4", "B3", "G3"];
+      notes.forEach((note, index) => {
+        setTimeout(() => {
+          synthRef.current?.triggerAttackRelease(note, "8n");
+        }, index * 150);
+      });
+    } catch (error) {
+      console.warn('Defeat sound failed:', error);
+    }
+  }, [initializeSynth]);
+
+  const playGameOver = useCallback(async () => {
+    await initializeSynth();
+    if (!synthRef.current) return;
+    
+    try {
+      // Big dramatic game over sound - longer descending sequence
+      const notes = ["C4", "A3", "F3", "D3", "B2", "G2", "E2", "C2"];
+      notes.forEach((note, index) => {
+        setTimeout(() => {
+          synthRef.current?.triggerAttackRelease(note, "4n");
+        }, index * 200);
+      });
+    } catch (error) {
+      console.warn('Game over sound failed:', error);
+    }
+  }, [initializeSynth]);
+
+  const playVictory = useCallback(async () => {
+    await initializeSynth();
+    if (!synthRef.current) return;
+    
+    try {
+      // Triumphant ascending victory fanfare
+      const notes = ["C4", "E4", "G4", "C5", "E5", "G5", "C6"];
+      notes.forEach((note, index) => {
+        setTimeout(() => {
+          synthRef.current?.triggerAttackRelease(note, "8n");
+        }, index * 100);
+      });
+      
+      // Add a final chord after the sequence
+      setTimeout(() => {
+        synthRef.current?.triggerAttackRelease("C5", "2n");
+      }, 800);
+    } catch (error) {
+      console.warn('Victory sound failed:', error);
+    }
+  }, [initializeSynth]);
+
   return {
     playWallHit,
     playPaddleHit,
     playInvaderDestroyed,
-    playInvaderMove
+    playInvaderMove,
+    playDefeat,
+    playGameOver,
+    playVictory
   };
 };

@@ -71,7 +71,7 @@ const INVADER_COLORS = [
 const BreakoutGame: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
-  const { playWallHit, playPaddleHit, playInvaderDestroyed, playInvaderMove } = useRetroSounds();
+  const { playWallHit, playPaddleHit, playInvaderDestroyed, playInvaderMove, playDefeat, playGameOver, playVictory } = useRetroSounds();
   
   const [gameState, setGameState] = useState<'playing' | 'paused' | 'gameOver' | 'won'>('playing');
   const [score, setScore] = useState(0);
@@ -569,12 +569,14 @@ const BreakoutGame: React.FC = () => {
         const newLives = prev - 1;
         if (newLives <= 0) {
           setGameState('gameOver');
+          playGameOver();
           toast({
             title: "Game Over!",
             description: `Final Score: ${score}`,
             variant: "destructive"
           });
         } else {
+          playDefeat();
           // Reset ball and attach to paddle
           setBallAttached(true);
           setWarpEffect({ active: true, scale: 0, opacity: 0 });
@@ -593,6 +595,7 @@ const BreakoutGame: React.FC = () => {
     const remainingInvaders = invaders.filter(invader => !invader.destroyed);
     if (remainingInvaders.length === 0) {
       setGameState('won');
+      playVictory();
       toast({
         title: "Invasion Defeated!",
         description: `You saved Earth! Final Score: ${score}`,
