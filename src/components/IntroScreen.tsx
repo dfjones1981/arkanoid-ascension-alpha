@@ -35,7 +35,7 @@ const IntroScreen = ({ onStart, playIntroMusic }: IntroScreenProps) => {
         {/* Game Title */}
         <h1 className="text-8xl md:text-9xl font-bold mb-8 text-foreground drop-shadow-2xl">
           <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-pulse">
-            SPACE
+            ARKAN
           </span>
           <br />
           <span className="bg-gradient-to-r from-accent via-primary to-accent bg-clip-text text-transparent animate-pulse">
