@@ -182,6 +182,52 @@ export const useRetroSounds = () => {
     }
   }, [initializeSynth, soundEnabled]);
 
+  const playIntroMusic = useCallback(async () => {
+    if (!soundEnabled) return;
+    try {
+      await initializeSynth();
+      if (!synthRef.current) return;
+      
+      // Epic intro theme with Space Invaders inspired melody
+      const introTheme = [
+        { note: 'E3', duration: 0.4 },
+        { note: 'E3', duration: 0.4 },
+        { note: 'E3', duration: 0.4 },
+        { note: 'C3', duration: 0.3 },
+        { note: 'E3', duration: 0.4 },
+        { note: 'G3', duration: 0.8 },
+        { note: 'G2', duration: 0.8 },
+        { note: 'C3', duration: 0.6 },
+        { note: 'G2', duration: 0.4 },
+        { note: 'E2', duration: 0.6 },
+        { note: 'A2', duration: 0.4 },
+        { note: 'B2', duration: 0.4 },
+        { note: 'Bb2', duration: 0.3 },
+        { note: 'A2', duration: 0.4 },
+        { note: 'G2', duration: 0.3 },
+        { note: 'E3', duration: 0.3 },
+        { note: 'G3', duration: 0.3 },
+        { note: 'A3', duration: 0.4 },
+        { note: 'F3', duration: 0.3 },
+        { note: 'G3', duration: 0.3 },
+        { note: 'E3', duration: 0.4 },
+        { note: 'C3', duration: 0.3 },
+        { note: 'D3', duration: 0.3 },
+        { note: 'B2', duration: 0.6 }
+      ];
+      
+      let delay = 0;
+      introTheme.forEach(({ note, duration }) => {
+        setTimeout(() => {
+          synthRef.current?.triggerAttackRelease(note, duration);
+        }, delay * 300);
+        delay++;
+      });
+    } catch (error) {
+      console.error('Error playing intro music:', error);
+    }
+  }, [initializeSynth, soundEnabled]);
+
   return {
     playWallHit,
     playPaddleHit,
@@ -191,6 +237,7 @@ export const useRetroSounds = () => {
     playGameOver,
     playVictory,
     playLaserFire,
+    playIntroMusic,
     toggleSound,
     soundEnabled
   };

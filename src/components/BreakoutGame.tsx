@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRetroSounds } from '@/hooks/useRetroSounds';
+import IntroScreen from './IntroScreen';
 
 interface Ball {
   x: number;
@@ -84,9 +85,9 @@ const INVADER_COLORS = [
 const BreakoutGame: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
-  const { playWallHit, playPaddleHit, playInvaderDestroyed, playInvaderMove, playDefeat, playGameOver, playVictory, playLaserFire, toggleSound, soundEnabled } = useRetroSounds();
+  const { playWallHit, playPaddleHit, playInvaderDestroyed, playInvaderMove, playDefeat, playGameOver, playVictory, playLaserFire, playIntroMusic, toggleSound, soundEnabled } = useRetroSounds();
   
-  const [gameState, setGameState] = useState<'playing' | 'paused' | 'gameOver' | 'won'>('playing');
+  const [gameState, setGameState] = useState<'intro' | 'playing' | 'paused' | 'gameOver' | 'won'>('intro');
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
   const [ballAttached, setBallAttached] = useState(true);
@@ -593,6 +594,7 @@ const BreakoutGame: React.FC = () => {
         setLives(prev => {
           const newLives = prev - 1;
           if (newLives <= 0) {
+            setTimeout(() => returnToIntro(), 2000); // Return to intro after 2 seconds
             setGameState('gameOver');
             playGameOver();
             toast({
@@ -639,6 +641,7 @@ const BreakoutGame: React.FC = () => {
         setLives(prev => {
           const newLives = prev - 1;
           if (newLives <= 0) {
+            setTimeout(() => returnToIntro(), 2000); // Return to intro after 2 seconds
             setGameState('gameOver');
             playGameOver();
             toast({
@@ -667,6 +670,7 @@ const BreakoutGame: React.FC = () => {
       
       // Check if invader reached bottom of screen
       if (invader.y + invader.height >= GAME_HEIGHT) {
+        setTimeout(() => returnToIntro(), 2000); // Return to intro after 2 seconds
         setGameState('gameOver');
         playGameOver();
         toast({
@@ -863,6 +867,7 @@ const BreakoutGame: React.FC = () => {
       setLives(prev => {
         const newLives = prev - 1;
         if (newLives <= 0) {
+          setTimeout(() => returnToIntro(), 2000); // Return to intro after 2 seconds
           setGameState('gameOver');
           playGameOver();
           toast({
@@ -889,6 +894,7 @@ const BreakoutGame: React.FC = () => {
     // Check for win condition
     const remainingInvaders = invaders.filter(invader => !invader.destroyed);
     if (remainingInvaders.length === 0) {
+      setTimeout(() => returnToIntro(), 3000); // Return to intro after 3 seconds
       setGameState('won');
       playVictory();
       toast({
@@ -1047,6 +1053,20 @@ const BreakoutGame: React.FC = () => {
     initializeInvaders();
   };
 
+  const returnToIntro = () => {
+    setGameState('intro');
+    // Reset all game state
+    setScore(0);
+    setLives(3);
+    setBallAttached(true);
+    setExplosionEffect({ active: false, particles: [] });
+    setWarpEffect({ active: false, scale: 1, opacity: 1 });
+    debrisRef.current = [];
+    setDebris([]);
+    lasersRef.current = [];
+    setLasers([]);
+  };
+
   const pauseGame = () => {
     setGameState(prev => prev === 'playing' ? 'paused' : 'playing');
   };
@@ -1054,7 +1074,7 @@ const BreakoutGame: React.FC = () => {
   // Initialize game
   useEffect(() => {
     initializeInvaders();
-    startGame();
+    // Start in intro state instead of playing
     
     return () => {
       if (animationRef.current) {
@@ -1077,6 +1097,11 @@ const BreakoutGame: React.FC = () => {
       }
     };
   }, [gameState, gameLoop]);
+
+  // Show intro screen if in intro state
+  if (gameState === 'intro') {
+    return <IntroScreen onStart={startGame} playIntroMusic={playIntroMusic} />;
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
@@ -1120,12 +1145,7 @@ const BreakoutGame: React.FC = () => {
                     {gameState === 'won' ? 'You Won!' : 'Game Over'}
                   </h2>
                   <p className="mb-4 text-muted-foreground">Final Score: {score}</p>
-                  <button
-                    onClick={startGame}
-                    className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-                  >
-                    Play Again
-                  </button>
+                  <p className="text-sm text-muted-foreground">Returning to intro...</p>
                 </div>
               )}
             </div>
