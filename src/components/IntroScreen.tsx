@@ -7,9 +7,7 @@ interface IntroScreenProps {
 }
 
 const IntroScreen = ({ onStart, playIntroMusic }: IntroScreenProps) => {
-  useEffect(() => {
-    playIntroMusic();
-  }, [playIntroMusic]);
+  // Removed intro music - no longer playing automatically
 
   const handleClick = () => {
     onStart();
